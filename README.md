@@ -1,16 +1,12 @@
-# FL2025: Group &lt;Group Number&gt; &lt;Project Name&gt;
-
-Name your repository using the following format:  
-**SP2025_Group_&lt;Group Number&gt;**  
-(Example: FL2025_Group_9)
+# FL2025: Group 1: Semester Planner;
 
 ## Team Members
-- **&lt;Member Name&gt;**: &lt;Email Address&gt; ; &lt;Github ID&gt;
-- **&lt;Member Name&gt;**: &lt;Email Address&gt; ; &lt;Github ID&gt;
-- **&lt;Member Name&gt;**: &lt;Email Address&gt; ; &lt;Github ID&gt;
+- **Oliver Sohn**: o.s.sohn@wustl.edu; oliver-sohn
+- **Adam Shumway**: a.shumway@wustl.edu; AdamShumway04
+- **Tanuja Gunapooti**: g.tanuja@wustl.edu; ; TanujaG2226;
 
 ## TA
-&lt;Name of your group's TA&gt;
+Asher
 
 ## Objectives
 &lt;Description of what your project is about, your key functionalities, tech stacks used, etc. &gt;
