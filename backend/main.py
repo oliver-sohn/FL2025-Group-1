@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 import msilib
 
 app = FastAPI()
@@ -7,9 +8,9 @@ app = FastAPI()
 
 
 @app.get("/")
-def read_root():
+def        read_root():
     return {"Hello": "World"}
 
 
-def      read():
+def read():
     pass
