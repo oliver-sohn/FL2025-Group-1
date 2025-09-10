@@ -1,0 +1,49 @@
+name: Lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project: [frontend, backend]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js (for frontend)
+        if: matrix.project == 'frontend'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install frontend dependencies
+        if: matrix.project == 'frontend'
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Run frontend linter
+        if: matrix.project == 'frontend'
+        run: npx eslint . --ext .js,.jsx,.ts,.tsx
+        working-directory: ./frontend
+
+      - name: Set up Python (for backend)
+        if: matrix.project == 'backend'
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install backend dependencies
+        if: matrix.project == 'backend'
+        run: pip install -r requirements.txt
+        working-directory: ./backend
+
+      - name: Run backend linter
+        if: matrix.project == 'backend'
+        run: |
+          ruff check .
+          black --check .
+        working-directory: ./backend
