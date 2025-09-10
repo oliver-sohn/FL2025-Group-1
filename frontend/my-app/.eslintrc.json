@@ -1,5 +1,5 @@
 {
-  "parser": "espree",   // default ESLint parser
+  "parser": "espree", // default ESLint parser
   "extends": ["airbnb", "airbnb/hooks", "prettier"],
   "plugins": ["react", "jsx-a11y", "import", "prettier"],
   "env": {
@@ -20,4 +20,3 @@
     "react": { "version": "detect" }
   }
 }
-
