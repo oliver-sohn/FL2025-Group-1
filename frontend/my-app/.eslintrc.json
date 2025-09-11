@@ -1,0 +1,22 @@
+{
+  "parser": "espree", // default ESLint parser
+  "extends": ["airbnb", "airbnb/hooks", "prettier"],
+  "plugins": ["react", "jsx-a11y", "import", "prettier"],
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "rules": {
+    "prettier/prettier": ["error"]
+  },
+  "settings": {
+    "react": { "version": "detect" }
+  }
+}
