@@ -1,11 +1,14 @@
 import os
 
+import requests
 from authlib.integrations.starlette_client import OAuth
 from dotenv import load_dotenv
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from jose import jwt
 
 from backend.database.crud import upsert_user_sync
+
+from .schemas import TokenRequest
 
 load_dotenv()  # ensure env vars loaded when module imported
 
@@ -41,23 +44,34 @@ async def login(request: Request):
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@router.get("/auth/callback")
-async def auth_callback(request: Request):
-    token = await oauth.google.authorize_access_token(request)
+@router.post("/auth/callback")
+async def auth_callback(token_request: TokenRequest, request: Request):
+    token = token_request.token
 
-    userinfo = token.get("userinfo")
-    if not userinfo:
-        resp = await oauth.google.get("userinfo", token=token)
-        userinfo = resp.json()
+    # Verify the token with Google
+    google_resp = requests.get(
+        "https://oauth2.googleapis.com/tokeninfo", params={"id_token": token}
+    )
+
+    if google_resp.status_code != 200:
+        raise HTTPException(status_code=400, detail="Invalid Google token")
+
+    userinfo = google_resp.json()
 
     google_id = userinfo["sub"]
     email = userinfo["email"]
     name = userinfo.get("name")
 
-    # Upsert user into DB (sync)
+    # Upsert into DB (sync)
     user = upsert_user_sync(google_id, email, name)
 
-    # Store session
+    # Store session (optional, if you’re using server-side sessions)
     request.session["user"] = {"id": user.id, "email": user.email}
 
-    return {"message": f"Welcome {user.name}"}
+    return {
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+        },
+    }

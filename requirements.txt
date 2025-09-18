@@ -3,6 +3,7 @@ uvicorn[standard]
 python-dotenv
 python-multipart
 itsdangerous
+requests
 
 # Linting/formatting
 black
