@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+python-multipart
+itsdangerous
+
+# Linting/formatting
+black
+ruff
+
+# Oauth
+authlib
+python-jose[cryptography]
+httpx
+
+# Database
+sqlalchemy[asyncio]
+psycopg2
