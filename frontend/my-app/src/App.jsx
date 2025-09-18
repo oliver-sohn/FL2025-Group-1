@@ -8,21 +8,22 @@ function App() {
 
   const handleLoginSuccess = async (credentialResponse) => {
     try {
-      // Send the credential (JWT) to your backend for verification
-      const res = await axios.post('http://localhost:8000/auth/callback', {
-        token: credentialResponse.credential,
-      });
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/auth/callback`,
+        {
+          token: credentialResponse.credential,
+        },
+      );
 
-      // Backend returns user info + JWT
       setUser(res.data.user);
-      console.log('Backend response:', res.data);
+      // console.log('Backend response:', res.data);
     } catch (err) {
-      console.error('Login failed:', err);
+      // console.error('Login failed:', err);
     }
   };
 
   const handleLoginError = () => {
-    console.error('Google login failed');
+    // console.error('Google login failed');
   };
 
   return (
