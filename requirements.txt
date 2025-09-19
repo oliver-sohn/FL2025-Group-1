@@ -17,3 +17,10 @@ httpx
 # Database
 sqlalchemy[asyncio]
 psycopg2
+
+#parser
+pydantic
+pymupdf
+python-docx
+dateparser
+python-dateutil
