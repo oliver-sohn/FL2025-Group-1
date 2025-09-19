@@ -1,3 +1,90 @@
 .App {
-  text-align: center;
+  min-height: 100vh;
+  background-color: #ecfdf5; /* light mint */
+  color: #064e3b; /* dark emerald */
+  font-family: Monaco, Consolas, 'Courier New', monospace;
+}
+
+.login-container {
+  background-color: #a7f3d0;
+  padding: 3rem 4rem;
+  border-radius: 12px;
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.login-container h1 {
+  margin-bottom: 1rem;
+  font-size: 2rem;
+  color: #047857;
+}
+
+.login-container p {
+  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+  color: #065f46;
+}
+
+.google-btn {
+  display: flex;
+  justify-content: center;
+}
+
+/* User Dashboard */
+.dashboard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Banner Layout */
+.banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #6ee7b7; /* light emerald */
+  padding: 1rem 2rem;
+}
+
+.user-name {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #064e3b;
+  flex: 1; /* let it take space on the left */
+}
+
+.navbar {
+  flex: 2; /* center section */
+}
+
+.navbar ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar li {
+  cursor: pointer;
+  font-weight: bold;
+  color: #047857;
+  transition: color 0.2s;
+}
+
+.navbar li:hover {
+  color: #065f46;
+}
+
+.user-email-btn {
+  background: none;
+  border: none;
+  color: #065f46;
+  font-family: Monaco, Consolas, 'Courier New', monospace;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.user-email-btn:hover {
+  text-decoration: underline;
 }
