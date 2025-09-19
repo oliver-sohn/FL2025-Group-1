@@ -228,7 +228,8 @@ async def parse_syllabus(
     # Sort for stable UI
     events.sort(key=lambda e: ((e.start_iso or ""), e.title))
 
-    return JSONResponse([e.model_dump() for e in events])
+    payload = [ (e.model_dump() if hasattr(e, "model_dump") else e.dict()) for e in events ]
+    return JSONResponse(payload)
 
 
 # Optional: local dev entrypoint
