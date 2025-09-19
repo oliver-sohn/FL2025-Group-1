@@ -2,7 +2,7 @@
   min-height: 100vh;
   background-color: #ecfdf5; /* light mint */
   color: #064e3b; /* dark emerald */
-  font-family: Monaco, Consolas, "Courier New", monospace;
+  font-family: Monaco, Consolas, 'Courier New', monospace;
 }
 
 .login-container {
@@ -81,7 +81,7 @@
   background: none;
   border: none;
   color: #065f46;
-  font-family: Monaco, Consolas, "Courier New", monospace;
+  font-family: Monaco, Consolas, 'Courier New', monospace;
   font-size: 1rem;
   cursor: pointer;
 }
