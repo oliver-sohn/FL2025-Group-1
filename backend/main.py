@@ -1,27 +1,39 @@
-from fastapi import FastAPI
+import os
 
-#parser imports
+from dotenv import load_dotenv
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
+
+from backend.database.db import Base, engine
+from backend.routers.auth import router as auth_router
 from parser_app import router as parser_router
+
+load_dotenv()
+
+SESSION_SECRET = os.getenv("SESSION_SECRET")
+
+Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI(title="Syllabus App")
 
-# Middleware for parser_app.py
+# CORS
+origins = [
+    "http://localhost:3000",  # frontend
+    "http://localhost:8000",  # backend
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # PROD: ["http://localhost:3000", "https://your-frontend.com"]
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=origins,  # allow these origins
+    allow_credentials=True,  # allow cookies / sessions
+    allow_methods=["*"],  # allow all HTTP methods
+    allow_headers=["*"],  # allow all headers
 )
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 
 
+app.include_router(auth_router)
 app.include_router(parser_router, prefix="/parser")
-
-def read():
-    pass
