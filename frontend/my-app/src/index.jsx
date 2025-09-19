@@ -1,8 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-// the import googleOauth was giving my an error even after importing so I added the line below in - feel free to remove it if it causes other issues - TG
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
