@@ -233,4 +233,5 @@ async def parse_syllabus(
 
 
 # Optional: local dev entrypoint
-# Run: uvicorn main:app --reload
+# Run: python -m uvicorn backend.main:app --reload
+
