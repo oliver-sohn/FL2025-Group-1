@@ -18,7 +18,6 @@
     // i added this because even though I've download the packages properly, I'm still getting errors about the no-extranious dependencies
     "import/no-extraneous-dependencies": "off",
     "no-console": "off"
-
   },
   "settings": {
     "react": { "version": "detect" }
