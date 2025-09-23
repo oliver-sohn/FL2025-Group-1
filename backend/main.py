@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from .parser_app import router as parser_router
+from .parser.parser_app import router as parser_router
 from .database.db import Base, engine
 from .routers.auth import router as auth_router
 

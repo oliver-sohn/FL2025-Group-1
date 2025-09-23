@@ -4,19 +4,20 @@
 # Cut-lines marked with [MODULE: ...] to make later splitting trivial.
 # ─────────────────────────────────────────────────────────────────────────────
 
-from fastapi import APIRouter, UploadFile, File, Form
-from fastapi.responses import JSONResponse 
-from pydantic import BaseModel
-from typing import Optional, List
-from datetime import datetime
 import io
 import re
+from datetime import datetime
+from typing import List, Optional
+
+import dateparser  # natural language date parser
 
 # External libs
 import fitz  # PyMuPDF - extracts PDF bytes from PDFs
-from docx import Document # Extracts from .docx files
-import dateparser # natural language date parser
-from dateutil import tz as dateutil_tz # advanced datetime utilities
+from dateutil import tz as dateutil_tz  # advanced datetime utilities
+from docx import Document  # Extracts from .docx files
+from fastapi import APIRouter, File, Form, UploadFile
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 router = APIRouter(tags=["parser"])
 
@@ -143,7 +144,9 @@ def pick_title(line: str) -> str:
         flags=re.IGNORECASE,
     )
     # Trim leading labels like "Due:", "Deadline:", etc.
-    cleaned = re.sub(r"^(Due|Deadline|Deliverable)\s*[:\-]\s*", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(
+        r"^(Due|Deadline|Deliverable)\s*[:\-]\s*", "", cleaned, flags=re.IGNORECASE
+    )
     title = cleaned.strip() or "Course Event"
     return title[:140]
 
@@ -202,7 +205,7 @@ def parse_line_to_event(
 @router.post("/parse")
 async def parse_syllabus(
     file: UploadFile = File(...),
-    semester_start: Optional[str] = Form(None),   # e.g., "2025-08-26"
+    semester_start: Optional[str] = Form(None),  # e.g., "2025-08-26"
     timezone: str = Form("America/Chicago"),
 ):
     """
@@ -228,10 +231,11 @@ async def parse_syllabus(
     # Sort for stable UI
     events.sort(key=lambda e: ((e.start_iso or ""), e.title))
 
-    payload = [ (e.model_dump() if hasattr(e, "model_dump") else e.dict()) for e in events ]
+    payload = [
+        (e.model_dump() if hasattr(e, "model_dump") else e.dict()) for e in events
+    ]
     return JSONResponse(payload)
 
 
 # Optional: local dev entrypoint
 # Run: python -m uvicorn backend.main:app --reload
-
