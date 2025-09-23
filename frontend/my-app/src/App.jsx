@@ -5,9 +5,6 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom';
-
-// import { GoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
 import './App.css';
 import Dashboard from './Dashboard';
 import SyllabusScanner from './SyllabusScanner';
@@ -17,27 +14,6 @@ import ProtectedRoute from './ProtectedRoute';
 
 function App() {
   const [user, setUser] = useState(null);
-  // const [showDropdown, setShowDropdown] = useState(false);
-
-  const handleLoginSuccess = async (credentialResponse) => {
-    try {
-      const res = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/auth/callback`,
-        {
-          token: credentialResponse.credential,
-        },
-      );
-
-      setUser(res.data.user);
-      // console.log('Backend response:', res.data);
-    } catch (err) {
-      // console.error('Login failed:', err);
-    }
-  };
-
-  const handleLoginError = () => {
-    // console.error('Google login failed');
-  };
 
   const handleLogout = () => {
     setUser(null);
@@ -50,10 +26,7 @@ function App() {
           path="/"
           element={
             !user ? (
-              <Login
-                handleLoginSuccess={handleLoginSuccess}
-                handleLoginError={handleLoginError}
-              />
+              <Login setUser={setUser} />
             ) : (
               <Navigate to="/dashboard" replace />
             )
