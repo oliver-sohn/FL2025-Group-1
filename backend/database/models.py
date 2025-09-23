@@ -5,6 +5,7 @@ from .db import Base
 
 class User(Base):
     __tablename__ = "users"
+
     id = Column(Integer, primary_key=True, index=True, nullable=False)
     google_id = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
