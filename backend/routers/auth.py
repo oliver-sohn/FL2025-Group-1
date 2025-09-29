@@ -5,7 +5,7 @@ from authlib.integrations.starlette_client import OAuth
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Request
 
-from backend.database.crud import upsert_user_sync
+from backend.database.users import upsert_user_sync
 
 from .schemas import TokenRequest
 
