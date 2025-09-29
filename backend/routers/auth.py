@@ -3,15 +3,17 @@ import os
 import requests
 from authlib.integrations.starlette_client import OAuth
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.orm import Session
 
-from backend.database.crud import upsert_user_sync
+from backend.database.db import get_db
+from backend.database.users import upsert_user_sync
 
 from .schemas import TokenRequest
 
 load_dotenv()
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["Auth"])
 oauth = OAuth()
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
@@ -30,8 +32,10 @@ oauth.register(
 )
 
 
-@router.post("/auth/callback")
-async def auth_callback(token_request: TokenRequest, request: Request):
+@router.post("/callback")
+async def auth_callback(
+    token_request: TokenRequest, request: Request, db: Session = Depends(get_db)
+):
     token = token_request.token
 
     # Verify the token with Google
@@ -48,7 +52,7 @@ async def auth_callback(token_request: TokenRequest, request: Request):
     email = userinfo["email"]
     name = userinfo.get("name")
 
-    user = upsert_user_sync(google_id, email, name)
+    user = upsert_user_sync(db, google_id, email, name)
 
     # Store session (optional, if you’re using server-side sessions)
     # request.session["user"] = {"id": user.id, "email": user.email}
