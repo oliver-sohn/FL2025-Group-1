@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import io
@@ -10,9 +9,8 @@ import dateparser
 import fitz  # PyMuPDF
 from dateutil import tz as dateutil_tz
 from docx import Document
-from pydantic import BaseModel
-from backend.routers.schemas import EventDraftSchema as EventDraft
 
+from backend.routers.schemas import EventDraftSchema as EventDraft
 
 __all__ = ["EventDraft", "parser"]
 
@@ -123,7 +121,9 @@ def _pick_title(line: str) -> str:
         line,
         flags=re.IGNORECASE,
     )
-    cleaned = re.sub(r"^(Due|Deadline|Deliverable)\s*[:\-]\s*", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(
+        r"^(Due|Deadline|Deliverable)\s*[:\-]\s*", "", cleaned, flags=re.IGNORECASE
+    )
     title = cleaned.strip() or "Course Event"
     return title[:140]
 
@@ -171,7 +171,7 @@ def _line_to_event(
 def parser(
     file_bytes: bytes,
     filename: str,
-    semester_start: Optional[str] = None,   # e.g., "2025-08-26"
+    semester_start: Optional[str] = None,  # e.g., "2025-08-26"
     timezone: str = "America/Chicago",
 ) -> List[EventDraft]:
     """

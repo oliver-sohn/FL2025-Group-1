@@ -39,6 +39,7 @@ class EventSchema(EventBase):
     class Config:
         orm_mode = True
 
+
 class EventDraftSchema(BaseModel):
     title: str
     start_iso: Optional[str] = None
