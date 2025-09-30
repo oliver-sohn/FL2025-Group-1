@@ -5,13 +5,13 @@ from sqlalchemy.orm import Session
 
 from backend.database import events as crud_events
 from backend.database.db import get_db
-from backend.routers.schemas import EventBase, EventSchema
+from backend.routers.schemas import EventBase, EventCreate, EventSchema
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
 
 @router.post("/", response_model=EventSchema)
-def create_event(event: EventBase, db: Session = Depends(get_db)):
+def create_event(event: EventCreate, db: Session = Depends(get_db)):
     return crud_events.create_event(db=db, event=event)
 
 
@@ -30,7 +30,7 @@ def get_event(event_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{event_id}", response_model=EventSchema)
 def update_event(
-    event_id: int, updated_event: EventBase, db: Session = Depends(get_db)
+    event_id: int, updated_event: EventCreate, db: Session = Depends(get_db)
 ):
     return crud_events.update_event(
         db=db, event_id=event_id, updated_event=updated_event

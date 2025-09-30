@@ -19,16 +19,24 @@ class User(Base):
 class Event(Base):
     __tablename__ = "events"
 
+    # IDS
     id = Column(Integer, primary_key=True, index=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     google_event_id = Column(String, unique=True, nullable=True)
 
+    # Event Info for GCal
     summary = Column(String, nullable=False)  # name of event
-    description = Column(String, nullable=False)
+    description = Column(String, nullable=True)
     location = Column(String, nullable=True)
+    colorId = Column(String, nullable=True)
+    eventType= Column(String, nullable=False)
+    
+    # Timing Info for GCal
     start = Column(DateTime, nullable=False)
     end = Column(DateTime, nullable=False)
     recurrence = Column(String, nullable=True)
+
+    course_name = Column(String, nullable=True)
 
     user = relationship("User", back_populates="events")
 
