@@ -11,23 +11,10 @@ import fitz  # PyMuPDF
 from dateutil import tz as dateutil_tz
 from docx import Document
 from pydantic import BaseModel
+from backend.routers.schemas import EventDraftSchema as EventDraft
 
 
 __all__ = ["EventDraft", "parser"]
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# [models.py] (kept local for a single-file parsing module)
-class EventDraft(BaseModel):
-    title: str
-    start_iso: Optional[str] = None
-    end_iso: Optional[str] = None
-    all_day: bool = False
-    course: Optional[str] = None
-    event_type: Optional[str] = None  # "assignment", "exam", etc.
-    source_page: Optional[int] = None
-    source_line: Optional[int] = None
-    raw_text: str
 
 
 # ─────────────────────────────────────────────────────────────────────────────

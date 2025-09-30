@@ -27,15 +27,7 @@ async def parse_events_from_file(
             timezone=timezone,
         )
 
-        def to_schema(e):
-            data = e.model_dump() if hasattr(e, "model_dump") else e.dict()
-            return (
-                EventDraftSchema.model_validate(data)
-                if hasattr(EventDraftSchema, "model_validate")     # Pydantic v2
-                else EventDraftSchema.parse_obj(data)              # Pydantic v1
-            )
-
-        return [to_schema(e) for e in events]
+        return events
 
 
     except Exception as e:
