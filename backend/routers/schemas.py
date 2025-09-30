@@ -38,3 +38,18 @@ class EventSchema(EventBase):
 
     class Config:
         orm_mode = True
+
+
+class EventDraftSchema(BaseModel):
+    title: str
+    start_iso: Optional[str] = None
+    end_iso: Optional[str] = None
+    all_day: bool = False
+    course: Optional[str] = None
+    event_type: Optional[str] = None
+    source_page: Optional[int] = None
+    source_line: Optional[int] = None
+    raw_text: str
+
+    class Config:
+        orm_mode = True
