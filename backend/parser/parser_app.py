@@ -1,29 +1,23 @@
-# parser_app.py
-# ─────────────────────────────────────────────────────────────────────────────
-# Syllabus Parser MVP (single file)
-# Cut-lines marked with [MODULE: ...] to make later splitting trivial.
-# ─────────────────────────────────────────────────────────────────────────────
+
+from __future__ import annotations
 
 import io
 import re
 from datetime import datetime
 from typing import List, Optional
 
-import dateparser  # natural language date parser
-
-# External libs
-import fitz  # PyMuPDF - extracts PDF bytes from PDFs
-from dateutil import tz as dateutil_tz  # advanced datetime utilities
-from docx import Document  # Extracts from .docx files
-from fastapi import APIRouter, File, Form, UploadFile
-from fastapi.responses import JSONResponse
+import dateparser
+import fitz  # PyMuPDF
+from dateutil import tz as dateutil_tz
+from docx import Document
 from pydantic import BaseModel
 
-router = APIRouter(tags=["parser"])
+
+__all__ = ["EventDraft", "parser"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# [MODULE: models.py]
+# [models.py] (kept local for a single-file parsing module)
 class EventDraft(BaseModel):
     title: str
     start_iso: Optional[str] = None
@@ -37,8 +31,8 @@ class EventDraft(BaseModel):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# [MODULE: extractors.py]
-def pdf_to_pages(file_bytes: bytes) -> List[str]:
+# [extractors.py]
+def _pdf_to_pages(file_bytes: bytes) -> List[str]:
     pages = []
     with fitz.open(stream=file_bytes, filetype="pdf") as doc:
         for p in doc:
@@ -46,18 +40,18 @@ def pdf_to_pages(file_bytes: bytes) -> List[str]:
     return pages
 
 
-def docx_to_text(file_bytes: bytes) -> str:
+def _docx_to_text(file_bytes: bytes) -> str:
     with io.BytesIO(file_bytes) as f:
         doc = Document(f)
     return "\n".join(p.text for p in doc.paragraphs)
 
 
-def guess_text(file_bytes: bytes, filename: str) -> List[str]:
+def _guess_text(file_bytes: bytes, filename: str) -> List[str]:
     name = (filename or "").lower()
     if name.endswith(".pdf"):
-        return pdf_to_pages(file_bytes)
+        return _pdf_to_pages(file_bytes)
     if name.endswith(".docx"):
-        return [docx_to_text(file_bytes)]
+        return [_docx_to_text(file_bytes)]
     try:
         return [file_bytes.decode("utf-8", errors="ignore")]
     except Exception:
@@ -65,8 +59,8 @@ def guess_text(file_bytes: bytes, filename: str) -> List[str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# [MODULE: heuristics.py]
-DATEISH = re.compile(
+# [heuristics.py]
+_DATEISH = re.compile(
     r"\b("
     r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.?\s+\d{1,2}(,\s*\d{4})?"
     r"|\d{1,2}/\d{1,2}(/\d{2,4})?"
@@ -75,23 +69,23 @@ DATEISH = re.compile(
     re.IGNORECASE,
 )
 
-KEYWORDS = re.compile(
+_KEYWORDS = re.compile(
     r"\b(assignment|hw|homework|project|problem\s*set|pset|quiz|exam|midterm|final|"
     r"presentation|paper|essay|lab|due|deadline|deliverable)\b",
     re.IGNORECASE,
 )
 
-TIME_RE = re.compile(r"\b(\d{1,2}(:\d{2})?\s*(am|pm)|\d{1,2}:\d{2})\b", re.IGNORECASE)
+_TIME_RE = re.compile(r"\b(\d{1,2}(:\d{2})?\s*(am|pm)|\d{1,2}:\d{2})\b", re.IGNORECASE)
 
-COURSE_RE = re.compile(r"\b([A-Z]{2,4}\s*\d{3,4}[A-Z]?)\b")  # e.g., CSCI 330, MATH233
+_COURSE_RE = re.compile(r"\b([A-Z]{2,4}\s*\d{3,4}[A-Z]?)\b")  # e.g., CSCI 330, MATH233
 
-DATE_TOKEN_RE = re.compile(
+_DATE_TOKEN_RE = re.compile(
     r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.?\s+\d{1,2}(,\s*\d{4})?"
     r"|\d{1,2}/\d{1,2}(/\d{2,4})?",
     re.IGNORECASE,
 )
 
-TYPE_MAP = {
+_TYPE_MAP = {
     "exam": "exam",
     "midterm": "exam",
     "final": "exam",
@@ -106,13 +100,13 @@ TYPE_MAP = {
 }
 
 
-def likely_event_line(line: str) -> bool:
-    return bool(DATEISH.search(line)) and bool(KEYWORDS.search(line))
+def _likely_event_line(line: str) -> bool:
+    return bool(_DATEISH.search(line)) and bool(_KEYWORDS.search(line))
 
 
-def guess_event_type(text: str) -> Optional[str]:
+def _guess_event_type(text: str) -> Optional[str]:
     t = text.lower()
-    for k, v in TYPE_MAP.items():
+    for k, v in _TYPE_MAP.items():
         if k in t:
             return v
     if "due" in t or "deadline" in t:
@@ -121,8 +115,8 @@ def guess_event_type(text: str) -> Optional[str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# [MODULE: parser.py]
-def normalize_dt(text: str, base: Optional[datetime]) -> Optional[datetime]:
+# [parser.py]
+def _normalize_dt(text: str, base: Optional[datetime]) -> Optional[datetime]:
     return dateparser.parse(
         text,
         settings={
@@ -133,8 +127,7 @@ def normalize_dt(text: str, base: Optional[datetime]) -> Optional[datetime]:
     )
 
 
-def pick_title(line: str) -> str:
-    # Remove common leading date/boilerplate fragments to surface the human title
+def _pick_title(line: str) -> str:
     cleaned = re.sub(
         r"^\s*(Week\s*\d+:?)?\s*((Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s*)?"
         r"((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.?\s+\d{1,2}(,\s*\d{4})?|"
@@ -143,54 +136,40 @@ def pick_title(line: str) -> str:
         line,
         flags=re.IGNORECASE,
     )
-    # Trim leading labels like "Due:", "Deadline:", etc.
-    cleaned = re.sub(
-        r"^(Due|Deadline|Deliverable)\s*[:\-]\s*", "", cleaned, flags=re.IGNORECASE
-    )
+    cleaned = re.sub(r"^(Due|Deadline|Deliverable)\s*[:\-]\s*", "", cleaned, flags=re.IGNORECASE)
     title = cleaned.strip() or "Course Event"
     return title[:140]
 
 
-def parse_line_to_event(
+def _line_to_event(
     line: str,
     page_idx: int,
     line_idx: int,
     semester_base: Optional[datetime],
     tz: str,
 ) -> Optional[EventDraft]:
-    # Try whole line first
-    dt = normalize_dt(line, semester_base)
+    dt = _normalize_dt(line, semester_base)
     if not dt:
-        # Fallback: pull out explicit date tokens and try again
-        tokens = DATE_TOKEN_RE.findall(line)
-        if tokens:
-            # findall returns tuples due to groups; rebuild a simple string of visible matches
-            token_texts = DATE_TOKEN_RE.findall(line)
-        # Better: iterate over finditer to get actual substrings
-        subs = [m.group(0) for m in DATE_TOKEN_RE.finditer(line)]
-        dt = normalize_dt(" ".join(subs), semester_base) if subs else None
-
+        subs = [m.group(0) for m in _DATE_TOKEN_RE.finditer(line)]
+        dt = _normalize_dt(" ".join(subs), semester_base) if subs else None
     if not dt:
         return None
 
-    # Time handling
-    has_time = bool(TIME_RE.search(line))
+    has_time = bool(_TIME_RE.search(line))
     dueish = any(w in line.lower() for w in ["due", "deadline", "by", "submit"])
     if not has_time and dueish:
         dt = dt.replace(hour=23, minute=59, second=0)
 
-    # Attach timezone
     tzinfo = dateutil_tz.gettz(tz)
     dt = dt.replace(tzinfo=tzinfo)
 
-    # Course / type
-    course_m = COURSE_RE.search(line)
-    event_type = guess_event_type(line)
+    course_m = _COURSE_RE.search(line)
+    event_type = _guess_event_type(line)
 
     return EventDraft(
-        title=pick_title(line),
+        title=_pick_title(line),
         start_iso=dt.isoformat(),
-        end_iso=None,  # add end times when you parse ranges like "2–4pm"
+        end_iso=None,  # future: parse ranges like "2–4pm"
         all_day=not has_time and not dueish,
         course=course_m.group(0) if course_m else None,
         event_type=event_type,
@@ -201,20 +180,25 @@ def parse_line_to_event(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# [MODULE: app routes]
-@router.post("/parse")
-async def parse_syllabus(
-    file: UploadFile = File(...),
-    semester_start: Optional[str] = Form(None),  # e.g., "2025-08-26"
-    timezone: str = Form("America/Chicago"),
-):
+# Public API
+def parser(
+    file_bytes: bytes,
+    filename: str,
+    semester_start: Optional[str] = None,   # e.g., "2025-08-26"
+    timezone: str = "America/Chicago",
+) -> List[EventDraft]:
     """
-    Upload a syllabus (PDF/DOCX/TXT). Returns a list of EventDrafts.
-    """
-    file_bytes = await file.read()
-    pages = guess_text(file_bytes, file.filename)
+    Parse a syllabus file (PDF/DOCX/TXT) into EventDrafts.
 
-    # Use semester start as a year anchor so "Oct 3" maps to the right year
+    Returns:
+        List[EventDraft]: sorted by (start_iso, title) for stable UI.
+
+    Notes:
+      - If `semester_start` is provided, it anchors year resolution (e.g., "Oct 3").
+      - If a line has 'due/deadline/by/submit' but no explicit time, we set 23:59 local.
+      - Timezone is applied via dateutil; output datetimes are ISO8601 with tz.
+    """
+    pages = _guess_text(file_bytes, filename)
     base = datetime.fromisoformat(semester_start) if semester_start else None
 
     events: List[EventDraft] = []
@@ -222,20 +206,11 @@ async def parse_syllabus(
         for l_idx, line in enumerate(page.splitlines()):
             if not line.strip():
                 continue
-            if not likely_event_line(line):
+            if not _likely_event_line(line):
                 continue
-            evt = parse_line_to_event(line, p_idx, l_idx, base, timezone)
+            evt = _line_to_event(line, p_idx, l_idx, base, timezone)
             if evt:
                 events.append(evt)
 
-    # Sort for stable UI
     events.sort(key=lambda e: ((e.start_iso or ""), e.title))
-
-    payload = [
-        (e.model_dump() if hasattr(e, "model_dump") else e.dict()) for e in events
-    ]
-    return JSONResponse(payload)
-
-
-# Optional: local dev entrypoint
-# Run: python -m uvicorn backend.main:app --reload
+    return events
