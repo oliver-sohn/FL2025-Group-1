@@ -1,8 +1,8 @@
 /* ---------- App base ---------- */
 .App {
   min-height: 100vh;
-  background-color: #ecfdf5; 
-  color: #064e3b;           
+  background-color: #ecfdf5;
+  color: #064e3b;
   font-family: Monaco, Consolas, 'Courier New', monospace;
 }
 
@@ -41,19 +41,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #6ee7b7; 
+  background-color: #6ee7b7;
   padding: 1rem 2rem;
 }
 .user-name {
   margin: 0;
   font-size: 1.5rem;
   color: #064e3b;
-  flex: 1; 
+  flex: 1;
 }
 
 /* ---------- NavBar ---------- */
 .navbar {
-  flex: 2; 
+  flex: 2;
 }
 .navbar ul {
   list-style: none;
@@ -70,14 +70,20 @@
   transition: color 0.2s;
 }
 .navbar a {
-  text-decoration: none;  
+  text-decoration: none;
   color: #047857;
   font-weight: bold;
   transition: color 0.2s;
 }
-.navbar a:hover { color: #065f46; }
-.navbar a:visited { color: #047857; }
-.navbar a:active { color: #047857; }
+.navbar a:hover {
+  color: #065f46;
+}
+.navbar a:visited {
+  color: #047857;
+}
+.navbar a:active {
+  color: #047857;
+}
 
 .user-email-btn {
   background: none;
@@ -87,7 +93,9 @@
   font-size: 1rem;
   cursor: pointer;
 }
-.user-email-btn:hover { text-decoration: underline; }
+.user-email-btn:hover {
+  text-decoration: underline;
+}
 
 /* ---------- Dashboard main content ---------- */
 .dashboard-main {
@@ -106,12 +114,18 @@
   gap: 1rem;
 }
 @media (min-width: 900px) {
-  .cards-grid { grid-template-columns: 1fr 1fr; }
+  .cards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (min-width: 1200px) {
-  .cards-grid { grid-template-columns: 1fr 1fr; }
-  .cards-grid .card:nth-child(3) { grid-column: 1 / -1; }
+  .cards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cards-grid .card:nth-child(3) {
+    grid-column: 1 / -1;
+  }
 }
 
 /* ---------- Reusable CardSection styles ---------- */
@@ -119,14 +133,14 @@
   background: #ffffff;
   border: 1px dashed #9ae6b4;
   border-radius: 12px;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #d1fae5;     
+  background: #d1fae5;
   padding: 0.75rem 1rem;
   border-bottom: 1px dashed #9ae6b4;
 }
@@ -142,7 +156,7 @@
 }
 .card-body {
   padding: 1rem;
-  min-height: 140px;     
+  min-height: 140px;
 }
 
 /* Empty state + future list styles */
@@ -161,4 +175,6 @@
   padding: 0.5rem 0.25rem;
   border-bottom: 1px dashed #e5e7eb;
 }
-.list li:last-child { border-bottom: none; }
+.list li:last-child {
+  border-bottom: none;
+}
