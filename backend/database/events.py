@@ -4,21 +4,24 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.routers.schemas import EventBase, EventSchema
+from backend.routers.schemas import EventBase, EventCreate, EventSchema
 
 from .models import Event as EventModel
 
 
-def create_event(db: Session, event: EventBase) -> EventSchema:
+def create_event(db: Session, event: EventCreate) -> EventSchema:
     db_event = EventModel(
         user_id=event.user_id,
         google_event_id=event.google_event_id,
         summary=event.summary,
         description=event.description,
         location=event.location,
+        colorId=event.colorId,
+        eventType=event.eventType,
         start=event.start,
         end=event.end,
         recurrence=event.recurrence,
+        course_name=event.course_name,
     )
     db.add(db_event)
     db.commit()

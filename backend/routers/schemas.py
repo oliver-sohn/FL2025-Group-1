@@ -22,18 +22,28 @@ class TokenRequest(BaseModel):
 
 
 class EventBase(BaseModel):
-    user_id: int
-    google_event_id: Optional[str]
-
+    # Basic Event Info
     summary: str
-    description: str
+    description: Optional[str]
     location: Optional[str]
+    colorId: Optional[str]
+    eventType: str
+
+    # Timing
     start: datetime
     end: datetime
     recurrence: Optional[str]
 
+    # Non Google Calendar
+    course_name: Optional[str]
 
-class EventSchema(EventBase):
+
+class EventCreate(EventBase):
+    user_id: int
+    google_event_id: Optional[str]
+
+
+class EventSchema(EventCreate):
     id: int
 
     class Config:
