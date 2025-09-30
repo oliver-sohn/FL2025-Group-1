@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.database import events as crud_events
 from backend.database.db import get_db
-from backend.routers.schemas import EventBase, EventCreate, EventSchema
+from backend.routers.schemas import EventCreate, EventSchema
 
 router = APIRouter(prefix="/events", tags=["Events"])
 

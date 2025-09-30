@@ -29,8 +29,8 @@ class Event(Base):
     description = Column(String, nullable=True)
     location = Column(String, nullable=True)
     colorId = Column(String, nullable=True)
-    eventType= Column(String, nullable=False)
-    
+    eventType = Column(String, nullable=False)
+
     # Timing Info for GCal
     start = Column(DateTime, nullable=False)
     end = Column(DateTime, nullable=False)
