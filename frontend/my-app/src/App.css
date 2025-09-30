@@ -1,35 +1,34 @@
+/* ---------- App base ---------- */
 .App {
   min-height: 100vh;
-  background-color: #ecfdf5; /* light mint */
-  color: #064e3b; /* dark emerald */
+  background-color: #ecfdf5;
+  color: #064e3b;
   font-family: Monaco, Consolas, 'Courier New', monospace;
 }
 
+/* ---------- Auth ---------- */
 .login-container {
   background-color: #a7f3d0;
   padding: 3rem 4rem;
   border-radius: 12px;
   box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.15);
 }
-
 .login-container h1 {
   margin-bottom: 1rem;
   font-size: 2rem;
   color: #047857;
 }
-
 .login-container p {
   margin-bottom: 1.5rem;
   font-size: 1.2rem;
   color: #065f46;
 }
-
 .google-btn {
   display: flex;
   justify-content: center;
 }
 
-/* User Dashboard */
+/* ---------- Dashboard shell ---------- */
 .dashboard {
   width: 100%;
   display: flex;
@@ -37,26 +36,25 @@
   align-items: stretch;
 }
 
-/* Banner Layout */
+/* Top banner */
 .banner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #6ee7b7; /* light emerald */
+  background-color: #6ee7b7;
   padding: 1rem 2rem;
 }
-
 .user-name {
   margin: 0;
   font-size: 1.5rem;
   color: #064e3b;
-  flex: 1; /* let it take space on the left */
+  flex: 1;
 }
 
+/* ---------- NavBar ---------- */
 .navbar {
-  flex: 2; /* center section */
+  flex: 2;
 }
-
 .navbar ul {
   list-style: none;
   display: flex;
@@ -65,16 +63,26 @@
   margin: 0;
   padding: 0;
 }
-
 .navbar li {
   cursor: pointer;
   font-weight: bold;
   color: #047857;
   transition: color 0.2s;
 }
-
-.navbar li:hover {
+.navbar a {
+  text-decoration: none;
+  color: #047857;
+  font-weight: bold;
+  transition: color 0.2s;
+}
+.navbar a:hover {
   color: #065f46;
+}
+.navbar a:visited {
+  color: #047857;
+}
+.navbar a:active {
+  color: #047857;
 }
 
 .user-email-btn {
@@ -87,4 +95,86 @@
 }
 .user-email-btn:hover {
   text-decoration: underline;
+}
+
+/* ---------- Dashboard main content ---------- */
+.dashboard-main {
+  padding: 1.25rem 1.5rem 2rem;
+}
+.page-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  color: #064e3b;
+}
+
+/* Grid that holds Events / Assignments / Exams cards */
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 900px) {
+  .cards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+  .cards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cards-grid .card:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- Reusable CardSection styles ---------- */
+.card {
+  background: #ffffff;
+  border: 1px dashed #9ae6b4;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #d1fae5;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px dashed #9ae6b4;
+}
+.card-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #065f46;
+  letter-spacing: 0.2px;
+}
+.card-action {
+  display: flex;
+  gap: 0.5rem;
+}
+.card-body {
+  padding: 1rem;
+  min-height: 140px;
+}
+
+/* Empty state + future list styles */
+.empty-state {
+  margin: 0;
+  color: #065f46;
+  opacity: 0.85;
+  font-style: italic;
+}
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.list li {
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px dashed #e5e7eb;
+}
+.list li:last-child {
+  border-bottom: none;
 }
