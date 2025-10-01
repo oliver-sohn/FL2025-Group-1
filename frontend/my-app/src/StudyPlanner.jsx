@@ -1,13 +1,19 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import NavBar from './NavBar';
+import WorkInProgress from './components/WorkInProgress';
+import './App.css';
 
 function StudyPlanner({ user, onLogout }) {
   return (
-    <div>
+    <div className="dashboard">
       <NavBar user={user} onLogout={onLogout} />
-      <main>
-        <h2>Study Planner Page</h2>
+      <main className="dashboard-main">
+        <h2 className="page-title">Study Planner</h2>
+        <WorkInProgress
+          feature="Study Planner"
+          note="Soon you’ll be able to schedule study sessions and visualize workload here."
+        />
       </main>
     </div>
   );
@@ -20,4 +26,5 @@ StudyPlanner.propTypes = {
   }).isRequired,
   onLogout: PropTypes.func.isRequired,
 };
+
 export default StudyPlanner;
