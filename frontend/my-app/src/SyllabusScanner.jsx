@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import NavBar from './NavBar';
 import CardSection from './components/CardSection';
-import FileDropZone from './components/FileUpload';
+import FileUpload from './components/FileUpload';
 import ParsedItemsSection from './components/ParsedItems';
 import ManualAddSection from './components/ManualAdd';
 import './App.css';
@@ -107,7 +107,7 @@ function SyllabusScanner({ user, onLogout }) {
 
         {step === 'idle' && (
           <CardSection title="Upload your syllabus (PDF)">
-            <FileDropZone onUpload={onUpload} />
+            <FileUpload onUpload={onUpload} />
             {uploadedFileName && (
               <p className="hint">Selected: {uploadedFileName}</p>
             )}
