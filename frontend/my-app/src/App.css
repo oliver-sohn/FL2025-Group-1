@@ -182,6 +182,18 @@
   } /* Exams full width */
 }
 
+/* events display*/
+.event-title-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* tweak size as you like */
+}
+.event-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* tweak size as you like */
+}
+
 /* ---------- Reusable CardSection styles ---------- */
 .card {
   background: #ffffff;
