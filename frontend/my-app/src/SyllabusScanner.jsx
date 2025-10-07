@@ -14,53 +14,34 @@ function SyllabusScanner({ user, onLogout }) {
   const [error, setError] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
 
-  const onUpload = (file) => {
+  const parseFile = async (file) => {
+    const formData = new FormData();
+
+    formData.append('file', file);
+    formData.append('semester_start', '');
+    formData.append('timezone', 'America/Chicago');
+
+    const url = `${process.env.REACT_APP_BACKEND_URL}/parser/parse`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { accept: 'application/json' },
+      body: formData,
+    });
+
+    return response.json();
+  };
+
+  const onUpload = async (file) => {
     // use the param so eslint/ts stop complaining + show feedback to user
     setUploadedFileName(file?.name || '');
 
     setError('');
     setStep('scanning');
 
-    // mock parse; replace with real API later
-    window.setTimeout(() => {
-      const mock = [
-        {
-          id: '1',
-          type: 'assignment',
-          title: 'CSE 4307 Homework #1',
-          date: '2025-08-01',
-        },
-        {
-          id: '2',
-          type: 'event',
-          title: 'Guest Speaker Series',
-          date: '2025-08-10',
-          time: '17:00',
-        },
-        {
-          id: '3',
-          type: 'assignment',
-          title: 'ENG 101 Rough Draft',
-          date: '2025-10-08',
-        },
-        {
-          id: '4',
-          type: 'event',
-          title: 'Office Hours',
-          date: '2025-08-01',
-          time: '14:00',
-        },
-        {
-          id: '5',
-          type: 'assignment',
-          title: 'CSE 131 Lab #4',
-          date: '2025-11-30',
-        },
-      ];
-      setParsed(mock);
-      setSelectedIds(new Set(mock.map((m) => m.id))); // preselect all
-      setStep('review');
-    }, 900);
+    const parsedEvents = await parseFile(file);
+    setParsed(parsedEvents);
+    setSelectedIds(new Set(parsedEvents.map((m) => m.id))); // preselect all
+    setStep('review');
   };
 
   const toggle = (id) => {
