@@ -112,7 +112,7 @@ def _normalize_dt(text: str, base: Optional[datetime]) -> Optional[datetime]:
     )
 
 
-def _pick_title(line: str) -> str:
+def _pick_summary(line: str) -> str:
     cleaned = re.sub(
         r"^\s*(Week\s*\d+:?)?\s*((Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s*)?"
         r"((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.?\s+\d{1,2}(,\s*\d{4})?|"
@@ -124,8 +124,8 @@ def _pick_title(line: str) -> str:
     cleaned = re.sub(
         r"^(Due|Deadline|Deliverable)\s*[:\-]\s*", "", cleaned, flags=re.IGNORECASE
     )
-    title = cleaned.strip() or "Course Event"
-    return title[:140]
+    summary = cleaned.strip() or "Course Event"
+    return summary[:140]
 
 
 def _line_to_event(
@@ -151,15 +151,15 @@ def _line_to_event(
     dt = dt.replace(tzinfo=tzinfo)
 
     course_m = _COURSE_RE.search(line)
-    event_type = _guess_event_type(line)
+    eventType = _guess_event_type(line)
 
     return EventDraft(
-        title=_pick_title(line),
-        start_iso=dt.isoformat(),
-        end_iso=None,  # future: parse ranges like "2–4pm"
+        summary=_pick_summary(line),
+        start=dt,
+        end=None,  # future: parse ranges like "2–4pm"
         all_day=not has_time and not dueish,
-        course=course_m.group(0) if course_m else None,
-        event_type=event_type,
+        course_name=course_m.group(0) if course_m else None,
+        eventType=eventType,
         source_page=page_idx,
         source_line=line_idx,
         raw_text=line.strip(),
@@ -178,12 +178,12 @@ def parser(
     Parse a syllabus file (PDF/DOCX/TXT) into EventDrafts.
 
     Returns:
-        List[EventDraft]: sorted by (start_iso, title) for stable UI.
+        List[EventDraft]: sorted by (start, summary) for stable UI.
 
     Notes:
       - If `semester_start` is provided, it anchors year resolution (e.g., "Oct 3").
       - If a line has 'due/deadline/by/submit' but no explicit time, we set 23:59 local.
-      - Timezone is applied via dateutil; output datetimes are ISO8601 with tz.
+      - Timezone is applied via dateutil; output values are timezone-aware datetime objects (FastAPI auto-serializes to ISO8601).
     """
     pages = _guess_text(file_bytes, filename)
     base = datetime.fromisoformat(semester_start) if semester_start else None
@@ -199,5 +199,5 @@ def parser(
             if evt:
                 events.append(evt)
 
-    events.sort(key=lambda e: ((e.start_iso or ""), e.title))
+    events.sort(key=lambda e: ((e.start or ""), e.summary))
     return events

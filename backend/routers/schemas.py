@@ -37,10 +37,16 @@ class EventBase(BaseModel):
     # Non Google Calendar
     course_name: Optional[str]
 
+    class Config:
+        orm_mode = True
+
 
 class EventCreate(EventBase):
     user_id: int
     google_event_id: Optional[str]
+
+    class Config:
+        orm_mode = True
 
 
 class EventSchema(EventCreate):
@@ -51,12 +57,22 @@ class EventSchema(EventCreate):
 
 
 class EventDraftSchema(BaseModel):
-    title: str
-    start_iso: Optional[str] = None
-    end_iso: Optional[str] = None
+    # aligned to EventBase
+    summary: str
+    description: Optional[str] = None
+    location: Optional[str] = None
+    colorId: Optional[str] = None
+    eventType: Optional[str] = None
+
+    start: Optional[datetime] = None
+    end: Optional[datetime] = None
+    recurrence: Optional[str] = None
+
+    # non Gcal
+    course_name: Optional[str] = None
+
+    # draft only helpers
     all_day: bool = False
-    course: Optional[str] = None
-    event_type: Optional[str] = None
     source_page: Optional[int] = None
     source_line: Optional[int] = None
     raw_text: str
