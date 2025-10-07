@@ -39,8 +39,12 @@ function SyllabusScanner({ user, onLogout }) {
     setStep('scanning');
 
     const parsedEvents = await parseFile(file);
-    setParsed(parsedEvents);
-    setSelectedIds(new Set(parsedEvents.map((m) => m.id))); // preselect all
+    const parsedEventsWithIds = parsedEvents.map((event, i) => ({
+      ...event,
+      id: i,
+    }));
+    setParsed(parsedEventsWithIds);
+    setSelectedIds(new Set(parsedEventsWithIds.map((m) => m.id))); // preselect all
     setStep('review');
   };
 
@@ -68,17 +72,49 @@ function SyllabusScanner({ user, onLogout }) {
     [parsed, selectedIds],
   );
 
-  const handleAddToSite = () => {
-    // leaving this for now until everything's connected
-    alert(`Adding ${selectedItems.length} item(s) to your site ✨`);
+  const postEvent = async (event) => {
+    const body = {
+      summary: event.summary,
+      description: event?.description ?? null,
+      location: event?.location ?? null,
+      colorId: event?.colorId ?? null,
+      eventType: event.eventType,
+      start: event.start,
+      end: event?.end ?? event.start,
+      recurrence: event?.recurrence ?? null,
+      course_name: event?.course_name ?? null,
+      user_id: user.id,
+      google_event_id: event?.google_event_id ?? null,
+    };
+
+    const url = `${process.env.REACT_APP_BACKEND_URL}/events`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    return response.json();
   };
 
-  const handleAddToSiteAndGCal = () => {
-    // leaving this for now until everything's connected
-    alert(
-      `Adding ${selectedItems.length} item(s) + exporting to Google Calendar 📆`,
-    );
+  const postEvents = async () => {
+    await Promise.all(selectedItems.map((event) => postEvent(event)));
   };
+
+  const handleAddToSite = async () => {
+    await postEvents();
+    alert(`Added ${selectedItems.length} item(s) to your site ✨`);
+  };
+
+  // const handleAddToSiteAndGCal = () => {
+  //   // leaving this for now until everything's connected
+  //   alert(
+  //     `Added ${selectedItems.length} item(s) + exporting to Google Calendar 📆`,
+  //   );
+  // };
 
   return (
     <div className="dashboard">
@@ -135,14 +171,14 @@ function SyllabusScanner({ user, onLogout }) {
               >
                 Add to site
               </button>
-              <button
+              {/* <button
                 className="btn btn-primary"
                 disabled={selectedIds.size === 0}
                 onClick={handleAddToSiteAndGCal}
                 type="button"
               >
                 Add to site & export to GCal
-              </button>
+              </button> */}
             </div>
           </>
         )}
@@ -157,6 +193,7 @@ SyllabusScanner.propTypes = {
   user: PropTypes.shape({
     name: PropTypes.string.isRequired,
     email: PropTypes.string.isRequired,
+    id: PropTypes.number.isRequired,
   }).isRequired,
   onLogout: PropTypes.func.isRequired,
 };
