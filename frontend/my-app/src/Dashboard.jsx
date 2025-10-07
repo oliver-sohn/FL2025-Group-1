@@ -4,7 +4,6 @@ import NavBar from './NavBar';
 import EventsSection from './components/EventSection';
 import AssignmentsSection from './components/AssignmentSection';
 import ExamsSection from './components/ExamSection';
-import MOCK_EVENTS from './testFiles/mockEvents';
 
 import './App.css';
 
@@ -12,19 +11,23 @@ function Dashboard({ user, onLogout }) {
   const [events, setEvents] = useState(undefined); // undefined on first render → tests your guards
   const [loading, setLoading] = useState(false);
 
-  // fetching fake data - replace with real backend
-  const fetchMock = () => {
+  const getEvents = React.useCallback(async () => {
+    const userId = user.id;
+    const url = `${process.env.REACT_APP_BACKEND_URL}/events?user_id=${userId}`;
+    const response = await fetch(url);
+    return response.json();
+  }, [user.id]);
+
+  const fetchEvents = React.useCallback(async () => {
     setLoading(true);
-    // pretend we’re calling the server
-    setTimeout(() => {
-      setEvents(MOCK_EVENTS);
-      setLoading(false);
-    }, 800);
-  };
+    const e = await getEvents();
+    setEvents(e);
+    setLoading(false);
+  }, [getEvents]);
 
   useEffect(() => {
-    fetchMock(); // load once when page mounts
-  }, []);
+    fetchEvents(); // load once when page mounts
+  }, [fetchEvents]);
 
   return (
     <div className="dashboard">
@@ -32,10 +35,10 @@ function Dashboard({ user, onLogout }) {
       <main className="dashboard-main">
         <h2 className="page-title">This is your Dashboard</h2>
         <div className="cards-grid">
-          <EventsSection // this is loading hardcoded data from the mockEvents file
+          <EventsSection
             loading={loading}
             events={events}
-            onRefresh={fetchMock} // uses the “Refresh” action in the card header
+            onRefresh={fetchEvents} // uses the “Refresh” action in the card header
           />
           <AssignmentsSection />
           <ExamsSection />
@@ -49,6 +52,7 @@ Dashboard.propTypes = {
   user: PropTypes.shape({
     name: PropTypes.string.isRequired,
     email: PropTypes.string.isRequired,
+    id: PropTypes.number.isRequired,
   }).isRequired,
   onLogout: PropTypes.func.isRequired,
 };

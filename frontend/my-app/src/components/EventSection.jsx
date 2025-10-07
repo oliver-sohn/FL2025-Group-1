@@ -71,7 +71,7 @@ function EventsSection({ events, loading, onRefresh }) {
 
       {!loading && isEmpty && (
         <p className="empty-state">
-          No events yet — connect your backend to see them here.
+          No events yet. Upload your syllabus to get started
         </p>
       )}
 
@@ -88,7 +88,7 @@ function EventsSection({ events, loading, onRefresh }) {
                 <div className="event-main">
                   <div className="event-title-line">
                     {ev.course_name && (
-                      <span className="chip">{ev.course_name}</span>
+                      <span className="chip">{ev.course_name}:</span>
                     )}
                     <span className="event-title">{ev.summary}</span>
                   </div>
