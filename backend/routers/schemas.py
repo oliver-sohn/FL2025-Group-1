@@ -23,7 +23,7 @@ class TokenRequest(BaseModel):
 
 class EventBase(BaseModel):
     # Basic Event Info
-    summary: str # title
+    summary: str  # title
     description: Optional[str]
     location: Optional[str]
     colorId: Optional[str]

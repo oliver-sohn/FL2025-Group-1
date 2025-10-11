@@ -14,6 +14,14 @@ function SyllabusScanner({ user, onLogout }) {
   const [error, setError] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
 
+  const reset = () => {
+    setStep('idle');
+    setParsed([]);
+    setSelectedIds(new Set());
+    setError('');
+    setUploadedFileName('');
+  };
+
   const parseFile = async (file) => {
     const formData = new FormData();
 
@@ -104,9 +112,18 @@ function SyllabusScanner({ user, onLogout }) {
     await Promise.all(selectedItems.map((event) => postEvent(event)));
   };
 
+  const removePostedEvents = () => {
+    const unselectedEvents = parsed.filter(
+      (event) => !selectedIds.has(event.id),
+    );
+    setParsed(unselectedEvents);
+    setSelectedIds(new Set());
+  };
+
   const handleAddToSite = async () => {
     await postEvents();
     alert(`Added ${selectedItems.length} item(s) to your site ✨`);
+    removePostedEvents();
   };
 
   // const handleAddToSiteAndGCal = () => {
@@ -163,6 +180,9 @@ function SyllabusScanner({ user, onLogout }) {
             />
 
             <div className="cta-row">
+              <button className="btn" onClick={reset} type="button">
+                Upload another syllabus
+              </button>
               <button
                 className="btn"
                 disabled={selectedIds.size === 0}
