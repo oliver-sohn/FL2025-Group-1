@@ -29,29 +29,29 @@ function isAllDayStart(event, startRaw) {
   );
 }
 
-// Backend expects a STRING for recurrence (not array).
+// Backend expects a *string* for recurrence; keep it simple.
 function toRecurrenceString(v) {
-  if (!v) return ''; // required but blank OK
-  if (Array.isArray(v)) {
-    return v.length ? String(v[0]) : '';
-    // If you later want multiple rules in one field:
-    // return v.map(String).join('\n');
-  }
+  if (!v) return '';
+  if (Array.isArray(v)) return v.join('\n'); // if parser ever returns an array
   return String(v);
+}
+
+// Generate a collision-resistant placeholder for manual events.
+// Ensures DB unique index on google_event_id is satisfied.
+function makeManualGoogleEventId(userId) {
+  const rand = Math.random().toString(36).slice(2, 8);
+  const ts = Date.now().toString(36);
+  return `manual:${userId}:${ts}:${rand}`;
 }
 
 // Normalize both scanned + manual items to what the backend expects.
 // IMPORTANT: backend requires these fields; send them even if empty:
-// - description (string)
-// - colorId (string)
-// - recurrence (string)
-// - course_name (string)
-// - google_event_id (string)
+// - description (string), colorId (string), recurrence (string), course_name (string), google_event_id (string)
 function normalizeForApi(event, userId) {
   const startRaw = pickDateLike(event.start || event.start_time);
   let endRaw = pickDateLike(event.end || event.end_time);
 
-  // Default end if missing:
+  // Default end if missing
   if (!endRaw && startRaw) {
     const startDate = new Date(startRaw);
     if (!Number.isNaN(startDate.getTime())) {
@@ -65,19 +65,23 @@ function normalizeForApi(event, userId) {
     }
   }
 
-  // Build body with exact keys the API is asking for
+  // Never send empty '' for google_event_id (unique index conflict). Use a unique placeholder for manual events.
+  const googleId =
+    (event.google_event_id && String(event.google_event_id).trim()) ||
+    makeManualGoogleEventId(userId);
+
   return {
     summary: event.summary || event.title || 'Untitled',
-    description: event.description ?? '', // required
+    description: event.description ?? '', // required string
     location: event.location ?? '',
     eventType: event.eventType || 'event',
-    start: startRaw, // ISO or YYYY-MM-DDT00:00:00
+    start: startRaw,
     end: endRaw || startRaw,
-    colorId: event.colorId ?? '0', // required; default "0"
-    recurrence: toRecurrenceString(event.recurrence), // required STRING
-    course_name: event.course_name ?? '', // required (snake_case)
-    user_id: userId, // required by your backend
-    google_event_id: event.google_event_id ?? '', // required
+    colorId: event.colorId ?? '0', // required string
+    recurrence: toRecurrenceString(event.recurrence),
+    course_name: event.course_name ?? '',
+    user_id: userId,
+    google_event_id: googleId, // unique, never empty
   };
 }
 
@@ -117,10 +121,6 @@ function SyllabusScanner({ user, onLogout }) {
     const text = await response.text();
     if (!response.ok) {
       const msg = prettyDetail(text);
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.debug('parseFile error payload:', text);
-      }
       throw new Error(`Parse failed: ${response.status}\n${msg}`);
     }
 
@@ -195,10 +195,6 @@ function SyllabusScanner({ user, onLogout }) {
     const text = await response.text();
     if (!response.ok) {
       const msg = prettyDetail(text);
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.debug('POST /events error payload:', text);
-      }
       throw new Error(`POST /events failed: ${response.status}\n${msg}`);
     }
 
@@ -303,7 +299,7 @@ function SyllabusScanner({ user, onLogout }) {
         )}
 
         {error && (
-          // fix <pre> inside <p> warning
+          // render as <pre> directly (not nested in <p>) to avoid hydration warning
           <pre
             className="error"
             role="alert"
