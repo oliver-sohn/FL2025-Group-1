@@ -7,16 +7,102 @@ import ParsedItemsSection from './components/ParsedItems';
 import ManualAddSection from './components/ManualAdd';
 import './App.css';
 
+/** ---------- Helpers: normalize event shape for the API ---------- * */
+
+// Pull a usable date/time string out of either:
+// - manual (Google-ish) { date | dateTime }
+// - scanned (flat string/Date)
+function pickDateLike(v) {
+  if (!v) return null;
+  if (typeof v === 'object') {
+    if (v.dateTime) return v.dateTime; // ISO string
+    if (v.date) return `${v.date}T00:00:00`; // all-day => midnight
+  }
+  return v; // already a string or Date
+}
+
+function isAllDayStart(event, startRaw) {
+  if (event?.start && typeof event.start === 'object' && event.start.date)
+    return true;
+  return (
+    typeof startRaw === 'string' && /^\d{4}-\d{2}-\d{2}(?!T)/.test(startRaw)
+  );
+}
+
+// Backend expects a STRING for recurrence (not array).
+function toRecurrenceString(v) {
+  if (!v) return ''; // required but blank OK
+  if (Array.isArray(v)) {
+    return v.length ? String(v[0]) : '';
+    // If you later want multiple rules in one field:
+    // return v.map(String).join('\n');
+  }
+  return String(v);
+}
+
+// Normalize both scanned + manual items to what the backend expects.
+// IMPORTANT: backend requires these fields; send them even if empty:
+// - description (string)
+// - colorId (string)
+// - recurrence (string)
+// - course_name (string)
+// - google_event_id (string)
+function normalizeForApi(event, userId) {
+  const startRaw = pickDateLike(event.start || event.start_time);
+  let endRaw = pickDateLike(event.end || event.end_time);
+
+  // Default end if missing:
+  if (!endRaw && startRaw) {
+    const startDate = new Date(startRaw);
+    if (!Number.isNaN(startDate.getTime())) {
+      if (isAllDayStart(event, startRaw)) {
+        endRaw = startRaw; // all-day single-day
+      } else {
+        const e = new Date(startDate);
+        e.setHours(e.getHours() + 1);
+        endRaw = e.toISOString(); // timed default +1h
+      }
+    }
+  }
+
+  // Build body with exact keys the API is asking for
+  return {
+    summary: event.summary || event.title || 'Untitled',
+    description: event.description ?? '', // required
+    location: event.location ?? '',
+    eventType: event.eventType || 'event',
+    start: startRaw, // ISO or YYYY-MM-DDT00:00:00
+    end: endRaw || startRaw,
+    colorId: event.colorId ?? '0', // required; default "0"
+    recurrence: toRecurrenceString(event.recurrence), // required STRING
+    course_name: event.course_name ?? '', // required (snake_case)
+    user_id: userId, // required by your backend
+    google_event_id: event.google_event_id ?? '', // required
+  };
+}
+
+// Pretty-print FastAPI error details
+function prettyDetail(text) {
+  try {
+    const json = JSON.parse(text);
+    const d = json.detail ?? json;
+    return typeof d === 'string' ? d : JSON.stringify(d, null, 2);
+  } catch {
+    return text;
+  }
+}
+
+/** -------------------- Component -------------------- * */
+
 function SyllabusScanner({ user, onLogout }) {
   const [step, setStep] = useState('idle'); // 'idle' | 'scanning' | 'review'
-  const [parsed, setParsed] = useState([]); // [{id,type,title,date,time}]
+  const [parsed, setParsed] = useState([]); // unified list (scanned + manual)
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [error, setError] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
 
   const parseFile = async (file) => {
     const formData = new FormData();
-
     formData.append('file', file);
     formData.append('semester_start', '');
     formData.append('timezone', 'America/Chicago');
@@ -28,34 +114,50 @@ function SyllabusScanner({ user, onLogout }) {
       body: formData,
     });
 
-    return response.json();
+    const text = await response.text();
+    if (!response.ok) {
+      const msg = prettyDetail(text);
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.debug('parseFile error payload:', text);
+      }
+      throw new Error(`Parse failed: ${response.status}\n${msg}`);
+    }
+
+    let data = [];
+    try {
+      data = text ? JSON.parse(text) : [];
+    } catch (e) {
+      throw new Error('Parse failed: invalid JSON from parser service');
+    }
+    return data;
   };
 
   const onUpload = async (file) => {
-    // use the param so eslint/ts stop complaining + show feedback to user
     setUploadedFileName(file?.name || '');
-
     setError('');
     setStep('scanning');
 
-    const parsedEvents = await parseFile(file);
-    const parsedEventsWithIds = parsedEvents.map((event, i) => ({
-      ...event,
-      id: i,
-    }));
-    setParsed(parsedEventsWithIds);
-    setSelectedIds(new Set(parsedEventsWithIds.map((m) => m.id))); // preselect all
-    setStep('review');
+    try {
+      const parsedEvents = await parseFile(file);
+      const parsedEventsWithIds = parsedEvents.map((event, i) => ({
+        ...event,
+        id: i,
+      }));
+      setParsed(parsedEventsWithIds);
+      setSelectedIds(new Set(parsedEventsWithIds.map((m) => m.id))); // preselect all
+      setStep('review');
+    } catch (e) {
+      setError(String(e.message || e));
+      setStep('idle');
+    }
   };
 
   const toggle = (id) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -73,21 +175,14 @@ function SyllabusScanner({ user, onLogout }) {
   );
 
   const postEvent = async (event) => {
-    const body = {
-      summary: event.summary,
-      description: event?.description ?? null,
-      location: event?.location ?? null,
-      colorId: event?.colorId ?? null,
-      eventType: event.eventType,
-      start: event.start,
-      end: event?.end ?? event.start,
-      recurrence: event?.recurrence ?? null,
-      course_name: event?.course_name ?? null,
-      user_id: user.id,
-      google_event_id: event?.google_event_id ?? null,
-    };
-
+    const body = normalizeForApi(event, user.id);
     const url = `${process.env.REACT_APP_BACKEND_URL}/events`;
+
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.debug('POST /events body', body);
+    }
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -97,24 +192,43 @@ function SyllabusScanner({ user, onLogout }) {
       body: JSON.stringify(body),
     });
 
-    return response.json();
+    const text = await response.text();
+    if (!response.ok) {
+      const msg = prettyDetail(text);
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.debug('POST /events error payload:', text);
+      }
+      throw new Error(`POST /events failed: ${response.status}\n${msg}`);
+    }
+
+    return text ? JSON.parse(text) : null;
   };
 
-  const postEvents = async () => {
-    await Promise.all(selectedItems.map((event) => postEvent(event)));
-  };
+  // Sequential without loops (no-restricted-syntax safe)
+  const postEvents = () =>
+    selectedItems.reduce(
+      (chain, ev) =>
+        chain.then(() => {
+          const withType = ev.eventType ? ev : { ...ev, eventType: 'event' };
+          return postEvent(withType);
+        }),
+      Promise.resolve(),
+    );
 
   const handleAddToSite = async () => {
-    await postEvents();
-    alert(`Added ${selectedItems.length} item(s) to your site ✨`);
+    setError('');
+    try {
+      await postEvents();
+      alert(`Added ${selectedItems.length} item(s) to your site ✨`);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      const msg = String(err?.message || err);
+      setError(msg);
+      alert('Some items failed to add. Check the error message below.');
+    }
   };
-
-  // const handleAddToSiteAndGCal = () => {
-  //   // leaving this for now until everything's connected
-  //   alert(
-  //     `Added ${selectedItems.length} item(s) + exporting to Google Calendar 📆`,
-  //   );
-  // };
 
   return (
     <div className="dashboard">
@@ -152,7 +266,12 @@ function SyllabusScanner({ user, onLogout }) {
             <ManualAddSection
               onAdd={(item) => {
                 const id = String(Date.now());
-                const nextItem = { id, ...item };
+                const nextItem = {
+                  id,
+                  // keep UI consistent even if user leaves it blank
+                  eventType: item.eventType || 'event',
+                  ...item,
+                };
                 setParsed((prev) => [...prev, nextItem]);
                 setSelectedIds((prev) => {
                   const next = new Set(prev);
@@ -183,7 +302,16 @@ function SyllabusScanner({ user, onLogout }) {
           </>
         )}
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          // fix <pre> inside <p> warning
+          <pre
+            className="error"
+            role="alert"
+            style={{ whiteSpace: 'pre-wrap' }}
+          >
+            {error}
+          </pre>
+        )}
       </main>
     </div>
   );
