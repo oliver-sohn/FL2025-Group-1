@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.routers.schemas import EventBase, EventCreate, EventSchema
+from backend.routers.schemas import EventCreate, EventSchema
 
 from .models import Event as EventModel
 
