@@ -8,6 +8,8 @@ class UserBase(BaseModel):
     google_id: str
     email: str
     name: str
+    access_token: str
+    token_expires_at: datetime
 
     class Config:
         orm_mode = True

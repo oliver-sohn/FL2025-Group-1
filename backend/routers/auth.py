@@ -1,3 +1,4 @@
+import datetime
 import os
 import time
 
@@ -6,12 +7,11 @@ import requests
 from authlib.integrations.starlette_client import OAuth
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from backend.database.db import get_db
-from backend.database.users import upsert_user_sync
-from backend.routers.schemas import UserBase
+from backend.database.users import select_user_by_google_id, select_user_by_id, upsert_user_sync
 
 load_dotenv()
 
@@ -60,29 +60,39 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
         )
         userinfo = resp.json()
 
-    google_id = userinfo["sub"],
-    email = userinfo["email"],
-    name = userinfo.get("name"),
+    google_id = userinfo["sub"]
+    email = userinfo["email"]
+    name = userinfo.get("name", "User")
+    access_token = token["access_token"]
+    expires_in = token["expires_in"]
+
+    upsert_user_sync(
+        db,
+        google_id=google_id,
+        email=email,
+        name=name,
+        access_token=access_token,
+        expires_in=expires_in,
+    )
 
     jwt_token = jwt.encode(
-        {"google_id": google_id, "email": email, "name": name, "exp": time.time() + 3600},
+        {
+            "google_id": google_id,
+            "email": email,
+            "name": name,
+            "exp": time.time() + 3600,
+        },
         os.getenv("JWT_SECRET"),
         os.getenv("JWT_ALGORITHM"),
     )
 
-    # access_token = token["access_token"]
-    # refresh_token = token.get("refresh_token")
-
-    # print(token)
-
-    upsert_user_sync(db, google_id, email, name)
-
-    # Redirect back to frontend with user info
+    # Redirect back to frontend with jwt_token
     redirect_url = f"{FRONTEND_URL}?jwt_token={jwt_token}"
     return RedirectResponse(url=redirect_url)
 
+
 @router.post("/verify")
-async def verify_token(request: Request):
+async def verify_token(request: Request, db: Session = Depends(get_db)):
     data = await request.json()
     token = data.get("token")
 
@@ -91,8 +101,25 @@ async def verify_token(request: Request):
 
     try:
         decoded = jwt.decode(token, os.getenv("JWT_SECRET"), os.getenv("JWT_ALGORITHM"))
-        return JSONResponse({"valid": True, "user": decoded})
+        user = select_user_by_google_id(db, google_id=decoded["google_id"])
+        return {
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+            },
+        }
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+@router.get("/session")
+async def check_session(user_id: int, db: Session = Depends(get_db)):
+    user = select_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    now = datetime.datetime.utcnow()
+    if user.token_expires_at < now:
+        raise HTTPException(status_code=401, detail="Session expired")
