@@ -189,9 +189,27 @@ function SyllabusScanner({ user, onLogout }) {
     return response.json();
   };
 
-  const postEvents = async () => {
-    await Promise.all(selectedItems.map((event) => postEvent(event)));
+  const postEvents = async () =>
+    Promise.all(selectedItems.map((event) => postEvent(event)));
+
+  const postEventToGCal = async (eventId) => {
+    const userId = user.id;
+    const url = `${process.env.REACT_APP_BACKEND_URL}/events/google?event_id=${eventId}&user_id=${userId}`;
+    const response = await fetch(url, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      const msg = prettyDetail(text);
+      throw new Error(`POST /events failed: ${response.status}\n${msg}`);
+    }
+
+    return response.json();
   };
+
+  const postEventsToGcal = async (eventIds) =>
+    Promise.all(eventIds.map((eventId) => postEventToGCal(eventId)));
 
   const removePostedEvents = () => {
     const unselectedEvents = parsed.filter(
@@ -206,6 +224,23 @@ function SyllabusScanner({ user, onLogout }) {
     try {
       await postEvents();
       alert(`Added ${selectedItems.length} item(s) to your site ✨`);
+      removePostedEvents();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      const msg = String(err?.message || err);
+      setError(msg);
+      alert('Some items failed to add. Check the error message below.');
+    }
+  };
+
+  const handleAddToSiteAndGCal = async () => {
+    setError('');
+    try {
+      const events = await postEvents();
+      const eventIds = events.map((event) => event.id);
+      await postEventsToGcal(eventIds);
+      alert(`Added ${selectedItems.length} item(s) to your GCal ✨`);
       removePostedEvents();
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -277,14 +312,14 @@ function SyllabusScanner({ user, onLogout }) {
               >
                 Add to site
               </button>
-              {/* <button
+              <button
                 className="btn btn-primary"
                 disabled={selectedIds.size === 0}
                 onClick={handleAddToSiteAndGCal}
                 type="button"
               >
                 Add to site & export to GCal
-              </button> */}
+              </button>
             </div>
           </>
         )}
