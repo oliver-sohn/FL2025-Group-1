@@ -58,17 +58,17 @@ function normalizeForApi(event, userId) {
   }
 
   return {
-    summary: event.summary || event.title || 'Untitled',
-    description: event.description ?? '',
-    location: event.location ?? '',
-    colorId: event.colorId ?? '1',
-    eventType: event.eventType || 'Event',
+    summary: event?.summary || event?.title || 'Untitled',
+    description: event?.description ?? '',
+    location: event?.location ?? '',
+    colorId: event?.colorId ?? '1',
+    eventType: event?.eventType || 'Event',
     start: startRaw,
     end: endRaw || startRaw,
-    recurrence: toRecurrenceString(event.recurrence),
-    course_name: event.course_name ?? '',
+    recurrence: toRecurrenceString(event?.recurrence),
+    course_name: event?.course_name ?? '',
     user_id: userId,
-    google_event_id: String(event.google_event_id).trim() ?? null,
+    google_event_id: event?.google_event_id ?? null,
   };
 }
 

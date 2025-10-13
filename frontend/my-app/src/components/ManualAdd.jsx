@@ -35,6 +35,7 @@ function ManualAddSection({ onAdd }) {
     timeZone: defaultTZ,
     // recurrence (optional, e.g., "RRULE:FREQ=WEEKLY;BYDAY=MO")
     recurrence: '',
+    course_name: '',
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -109,6 +110,8 @@ function ManualAddSection({ onAdd }) {
       // Recurrence
       recurrence: form.recurrence.trim() ? [form.recurrence.trim()] : undefined,
 
+      course_name: form.course_name.trim() || undefined,
+
       // Not collecting these in manual flow right now:
       // recurringEventId: undefined,
       // originalStartTime: undefined,
@@ -129,6 +132,7 @@ function ManualAddSection({ onAdd }) {
       endTime: '',
       timeZone: form.timeZone,
       recurrence: '',
+      course_name: '',
     });
   };
 
@@ -148,8 +152,11 @@ function ManualAddSection({ onAdd }) {
               required
             />
           </label>
+        </div>
 
-          <label className="field" htmlFor="event-type-field">
+        {/* Row 2 — Event Details */}
+        <div className="row">
+          <label className="field grow" htmlFor="event-type-field">
             <span>Event type</span>
             <input
               id="event-type-field"
@@ -160,54 +167,19 @@ function ManualAddSection({ onAdd }) {
               required
             />
           </label>
-        </div>
 
-        {/* Row 2 — Date/Time */}
-        <div className="row">
-          <label className="field" htmlFor="start-date-field">
-            <span>Start date</span>
+          <label className="field grow" htmlFor="course-name-field">
+            <span>Course Name</span>
             <input
-              id="start-date-field"
-              type="date"
-              value={form.startDate}
-              onChange={handleChange('startDate')}
+              id="course-name-field"
+              type="text"
+              value={form.course_name}
+              onChange={handleChange('course_name')}
+              placeholder="CSE437, Intro to Psych, etc."
               required
             />
           </label>
 
-          <label className="field" htmlFor="start-time-field">
-            <span>Start time (optional)</span>
-            <input
-              id="start-time-field"
-              type="time"
-              value={form.startTime}
-              onChange={handleChange('startTime')}
-            />
-          </label>
-
-          <label className="field" htmlFor="end-date-field">
-            <span>End date (optional)</span>
-            <input
-              id="end-date-field"
-              type="date"
-              value={form.endDate}
-              onChange={handleChange('endDate')}
-            />
-          </label>
-
-          <label className="field" htmlFor="end-time-field">
-            <span>End time (optional)</span>
-            <input
-              id="end-time-field"
-              type="time"
-              value={form.endTime}
-              onChange={handleChange('endTime')}
-            />
-          </label>
-        </div>
-
-        {/* Row 3 — Location / Timezone */}
-        <div className="row">
           <label className="field grow" htmlFor="location-field">
             <span>Location (optional)</span>
             <input
@@ -218,8 +190,52 @@ function ManualAddSection({ onAdd }) {
               placeholder="Jubel Hall 101 / Zoom…"
             />
           </label>
+        </div>
 
-          <label className="field" htmlFor="tz-field">
+        {/* Row 3 -- Date/Time */}
+        <div className="row">
+          <label className="field grow" htmlFor="start-date-field">
+            <span>Start date</span>
+            <input
+              id="start-date-field"
+              type="date"
+              value={form.startDate}
+              onChange={handleChange('startDate')}
+              required
+            />
+          </label>
+
+          <label className="field grow" htmlFor="start-time-field">
+            <span>Start time (optional)</span>
+            <input
+              id="start-time-field"
+              type="time"
+              value={form.startTime}
+              onChange={handleChange('startTime')}
+            />
+          </label>
+
+          <label className="field grow" htmlFor="end-date-field">
+            <span>End date (optional)</span>
+            <input
+              id="end-date-field"
+              type="date"
+              value={form.endDate}
+              onChange={handleChange('endDate')}
+            />
+          </label>
+
+          <label className="field grow" htmlFor="end-time-field">
+            <span>End time (optional)</span>
+            <input
+              id="end-time-field"
+              type="time"
+              value={form.endTime}
+              onChange={handleChange('endTime')}
+            />
+          </label>
+
+          <label className="field grow" htmlFor="tz-field">
             <span>Time zone</span>
             <input
               id="tz-field"
