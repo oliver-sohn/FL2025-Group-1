@@ -11,7 +11,11 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from backend.database.db import get_db
-from backend.database.users import select_user_by_google_id, select_user_by_id, upsert_user_sync
+from backend.database.users import (
+    select_user_by_google_id,
+    select_user_by_id,
+    upsert_user_sync,
+)
 
 load_dotenv()
 
@@ -113,6 +117,7 @@ async def verify_token(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
 
 @router.get("/session")
 async def check_session(user_id: int, db: Session = Depends(get_db)):
