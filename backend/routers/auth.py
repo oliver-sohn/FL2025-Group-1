@@ -35,8 +35,9 @@ oauth.register(
     server_metadata_url=CONF_URL,
     client_kwargs={
         "scope": "openid email profile https://www.googleapis.com/auth/calendar.events",
-        "access_type": "offline",
-        "prompt": "consent",  # ensures refresh_token is returned every time
+        # ensures refresh_token is returned every time -- not needed anymore since we are using access token
+        # "access_type": "offline",
+        # "prompt": "consent",
     },
 )
 

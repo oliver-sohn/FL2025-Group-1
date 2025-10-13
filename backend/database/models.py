@@ -34,8 +34,8 @@ class Event(Base):
     eventType = Column(String, nullable=False)
 
     # Timing Info for GCal
-    start = Column(DateTime, nullable=False)
-    end = Column(DateTime, nullable=False)
+    start = Column(DateTime(timezone=True), nullable=False)
+    end = Column(DateTime(timezone=True), nullable=False)
     recurrence = Column(String, nullable=True)
 
     course_name = Column(String, nullable=True)
