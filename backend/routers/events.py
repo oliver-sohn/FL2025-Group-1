@@ -47,10 +47,7 @@ def delete_event(event_id: int, db: Session = Depends(get_db)):
 
 
 # Google Events Logic
-@router.post(
-    "/google",
-    #  response_model=EventSchema
-)
+@router.post("/google", response_model=EventSchema)
 def post_event_to_google(user_id: int, event_id: int, db: Session = Depends(get_db)):
     event = crud_events.get_event(db, event_id=event_id)
     user: User = select_user_by_id(db, user_id)
