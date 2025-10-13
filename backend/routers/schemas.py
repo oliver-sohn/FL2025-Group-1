@@ -23,7 +23,7 @@ class TokenRequest(BaseModel):
 
 class EventBase(BaseModel):
     # Basic Event Info
-    summary: str
+    summary: str  # title
     description: Optional[str]
     location: Optional[str]
     colorId: Optional[str]
@@ -62,9 +62,9 @@ class EventDraftSchema(BaseModel):
     description: Optional[str] = None
     location: Optional[str] = None
     colorId: Optional[str] = None
-    eventType: Optional[str] = None
+    eventType: str = "Event"
 
-    start: Optional[datetime] = None
+    start: datetime
     end: Optional[datetime] = None
     recurrence: Optional[str] = None
 

@@ -19,12 +19,47 @@ const fmtTime = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
 });
 
-function formatRange(start, end) {
-  const s = toDate(start);
-  const e = toDate(end);
+// NEW: unify start/end across scanned + manual
+function pickDateLike(val) {
+  if (!val) return null;
+  // manual (Google-ish)
+  if (typeof val === 'object') {
+    if (val.dateTime) return val.dateTime; // timed
+    if (val.date) return val.date; // all-day (YYYY-MM-DD)
+  }
+  // scanned (flat string or Date)
+  return val;
+}
+
+function isDateOnly(s) {
+  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+function formatRange(startInput, endInput) {
+  const sRaw = pickDateLike(startInput);
+  const eRaw = pickDateLike(endInput);
+
+  if (!sRaw || !eRaw) return '—';
+
+  // All-day handling
+  const sAllDay = isDateOnly(sRaw);
+  const eAllDay = isDateOnly(eRaw);
+
+  if (sAllDay && eAllDay) {
+    const s = toDate(sRaw);
+    const e = toDate(eRaw);
+    if (sameDay(s, e)) return `${fmtDate.format(s)}`; // single all-day
+    return `${fmtDate.format(s)} → ${fmtDate.format(e)}`; // multi-day all-day
+  }
+
+  // Timed or mixed (treat date-only as 00:00 local)
+  const s = toDate(sRaw);
+  const e = toDate(eRaw);
   if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return '—';
-  if (sameDay(s, e))
+
+  if (sameDay(s, e)) {
     return `${fmtDate.format(s)} • ${fmtTime.format(s)}–${fmtTime.format(e)}`;
+  }
   return `${fmtDate.format(s)}, ${fmtTime.format(s)} → ${fmtDate.format(e)}, ${fmtTime.format(e)}`;
 }
 
@@ -52,8 +87,10 @@ function ParsedItemsSection({ items, selectedIds, onToggle, onToggleAll }) {
           {list.map((item) => {
             const checkboxId = `parsed-${item.id}`;
             const title = item.summary || item.title || 'Untitled';
-            const startVal = item.start_time || item.start;
-            const endVal = item.end_time || item.end;
+
+            // read both shapes: scanned (start_time/end_time) and manual (start/end objects)
+            const startVal = item.start_time ?? item.start;
+            const endVal = item.end_time ?? item.end ?? item.start;
 
             return (
               <li key={item.id} className="parsed-row">

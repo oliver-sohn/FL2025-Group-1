@@ -7,16 +7,101 @@ import ParsedItemsSection from './components/ParsedItems';
 import ManualAddSection from './components/ManualAdd';
 import './App.css';
 
+/** ---------- Helpers: normalize event shape for the API ---------- * */
+
+// Pull a usable date/time string out of either:
+// - manual (Google-ish) { date | dateTime }
+// - scanned (flat string/Date)
+function pickDateLike(v) {
+  if (!v) return null;
+  if (typeof v === 'object') {
+    if (v.dateTime) return v.dateTime; // ISO string
+    if (v.date) return `${v.date}T00:00:00`; // all-day => midnight
+  }
+  return v; // already a string or Date
+}
+
+function isAllDayStart(event, startRaw) {
+  if (event?.start && typeof event.start === 'object' && event.start.date)
+    return true;
+  return (
+    typeof startRaw === 'string' && /^\d{4}-\d{2}-\d{2}(?!T)/.test(startRaw)
+  );
+}
+
+// Backend expects a *string* for recurrence; keep it simple.
+function toRecurrenceString(v) {
+  if (!v) return '';
+  if (Array.isArray(v)) return v.join('\n'); // if parser ever returns an array
+  return String(v);
+}
+
+// Normalize both scanned + manual items to what the backend expects.
+// IMPORTANT: backend requires these fields; send them even if empty:
+// - description (string), colorId (string), recurrence (string), course_name (string), google_event_id (string)
+function normalizeForApi(event, userId) {
+  const startRaw = pickDateLike(event.start || event.start_time);
+  let endRaw = pickDateLike(event.end || event.end_time);
+
+  // Default end if missing
+  if (!endRaw && startRaw) {
+    const startDate = new Date(startRaw);
+    if (!Number.isNaN(startDate.getTime())) {
+      if (isAllDayStart(event, startRaw)) {
+        endRaw = startRaw; // all-day single-day
+      } else {
+        const e = new Date(startDate);
+        e.setHours(e.getHours() + 1);
+        endRaw = e.toISOString(); // timed default +1h
+      }
+    }
+  }
+
+  return {
+    summary: event?.summary || event?.title || 'Untitled',
+    description: event?.description ?? '',
+    location: event?.location ?? '',
+    colorId: event?.colorId ?? '1',
+    eventType: event?.eventType || 'Event',
+    start: startRaw,
+    end: endRaw || startRaw,
+    recurrence: toRecurrenceString(event?.recurrence),
+    course_name: event?.course_name ?? '',
+    user_id: userId,
+    google_event_id: event?.google_event_id ?? null,
+  };
+}
+
+// Pretty-print FastAPI error details
+function prettyDetail(text) {
+  try {
+    const json = JSON.parse(text);
+    const d = json.detail ?? json;
+    return typeof d === 'string' ? d : JSON.stringify(d, null, 2);
+  } catch {
+    return text;
+  }
+}
+
+/** -------------------- Component -------------------- * */
+
 function SyllabusScanner({ user, onLogout }) {
   const [step, setStep] = useState('idle'); // 'idle' | 'scanning' | 'review'
-  const [parsed, setParsed] = useState([]); // [{id,type,title,date,time}]
+  const [parsed, setParsed] = useState([]); // unified list (scanned + manual)
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [error, setError] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
 
+  const reset = () => {
+    setStep('idle');
+    setParsed([]);
+    setSelectedIds(new Set());
+    setError('');
+    setUploadedFileName('');
+  };
+
   const parseFile = async (file) => {
     const formData = new FormData();
-
     formData.append('file', file);
     formData.append('semester_start', '');
     formData.append('timezone', 'America/Chicago');
@@ -28,34 +113,44 @@ function SyllabusScanner({ user, onLogout }) {
       body: formData,
     });
 
-    return response.json();
+    if (!response.ok) {
+      const text = await response.text();
+      const msg = prettyDetail(text);
+      throw new Error(`Parse failed: ${response.status}\n${msg}`);
+    }
+
+    try {
+      return response.json();
+    } catch (e) {
+      throw new Error('Parse failed: invalid JSON from parser service');
+    }
   };
 
   const onUpload = async (file) => {
-    // use the param so eslint/ts stop complaining + show feedback to user
     setUploadedFileName(file?.name || '');
-
     setError('');
     setStep('scanning');
 
-    const parsedEvents = await parseFile(file);
-    const parsedEventsWithIds = parsedEvents.map((event, i) => ({
-      ...event,
-      id: i,
-    }));
-    setParsed(parsedEventsWithIds);
-    setSelectedIds(new Set(parsedEventsWithIds.map((m) => m.id))); // preselect all
-    setStep('review');
+    try {
+      const parsedEvents = await parseFile(file);
+      const parsedEventsWithIds = parsedEvents.map((event, i) => ({
+        ...event,
+        id: i,
+      }));
+      setParsed(parsedEventsWithIds);
+      setSelectedIds(new Set(parsedEventsWithIds.map((m) => m.id))); // preselect all
+      setStep('review');
+    } catch (e) {
+      setError(String(e.message || e));
+      setStep('idle');
+    }
   };
 
   const toggle = (id) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -73,21 +168,9 @@ function SyllabusScanner({ user, onLogout }) {
   );
 
   const postEvent = async (event) => {
-    const body = {
-      summary: event.summary,
-      description: event?.description ?? null,
-      location: event?.location ?? null,
-      colorId: event?.colorId ?? null,
-      eventType: event.eventType,
-      start: event.start,
-      end: event?.end ?? event.start,
-      recurrence: event?.recurrence ?? null,
-      course_name: event?.course_name ?? null,
-      user_id: user.id,
-      google_event_id: event?.google_event_id ?? null,
-    };
-
+    const body = normalizeForApi(event, user.id);
     const url = `${process.env.REACT_APP_BACKEND_URL}/events`;
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -97,6 +180,12 @@ function SyllabusScanner({ user, onLogout }) {
       body: JSON.stringify(body),
     });
 
+    if (!response.ok) {
+      const text = await response.text();
+      const msg = prettyDetail(text);
+      throw new Error(`POST /events failed: ${response.status}\n${msg}`);
+    }
+
     return response.json();
   };
 
@@ -104,17 +193,28 @@ function SyllabusScanner({ user, onLogout }) {
     await Promise.all(selectedItems.map((event) => postEvent(event)));
   };
 
-  const handleAddToSite = async () => {
-    await postEvents();
-    alert(`Added ${selectedItems.length} item(s) to your site ✨`);
+  const removePostedEvents = () => {
+    const unselectedEvents = parsed.filter(
+      (event) => !selectedIds.has(event.id),
+    );
+    setParsed(unselectedEvents);
+    setSelectedIds(new Set());
   };
 
-  // const handleAddToSiteAndGCal = () => {
-  //   // leaving this for now until everything's connected
-  //   alert(
-  //     `Added ${selectedItems.length} item(s) + exporting to Google Calendar 📆`,
-  //   );
-  // };
+  const handleAddToSite = async () => {
+    setError('');
+    try {
+      await postEvents();
+      alert(`Added ${selectedItems.length} item(s) to your site ✨`);
+      removePostedEvents();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      const msg = String(err?.message || err);
+      setError(msg);
+      alert('Some items failed to add. Check the error message below.');
+    }
+  };
 
   return (
     <div className="dashboard">
@@ -152,7 +252,10 @@ function SyllabusScanner({ user, onLogout }) {
             <ManualAddSection
               onAdd={(item) => {
                 const id = String(Date.now());
-                const nextItem = { id, ...item };
+                const nextItem = {
+                  id,
+                  ...item,
+                };
                 setParsed((prev) => [...prev, nextItem]);
                 setSelectedIds((prev) => {
                   const next = new Set(prev);
@@ -163,6 +266,9 @@ function SyllabusScanner({ user, onLogout }) {
             />
 
             <div className="cta-row">
+              <button className="btn" onClick={reset} type="button">
+                Upload another syllabus
+              </button>
               <button
                 className="btn"
                 disabled={selectedIds.size === 0}
@@ -183,7 +289,16 @@ function SyllabusScanner({ user, onLogout }) {
           </>
         )}
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          // render as <pre> directly (not nested in <p>) to avoid hydration warning
+          <pre
+            className="error"
+            role="alert"
+            style={{ whiteSpace: 'pre-wrap' }}
+          >
+            {error}
+          </pre>
+        )}
       </main>
     </div>
   );
