@@ -14,8 +14,9 @@ load_dotenv()
 
 SESSION_SECRET = os.getenv("SESSION_SECRET")
 
+# Uncomment the below line to reset the database tables
+# Base.metadata.drop_all(bind=engine)
 
-# Base.metadata.drop_all(bind=engine) --> only have this for one run if the table scheme changes
 Base.metadata.create_all(bind=engine)
 
 

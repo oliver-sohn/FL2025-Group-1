@@ -36,14 +36,6 @@ function toRecurrenceString(v) {
   return String(v);
 }
 
-// Generate a collision-resistant placeholder for manual events.
-// Ensures DB unique index on google_event_id is satisfied.
-function makeManualGoogleEventId(userId) {
-  const rand = Math.random().toString(36).slice(2, 8);
-  const ts = Date.now().toString(36);
-  return `manual:${userId}:${ts}:${rand}`;
-}
-
 // Normalize both scanned + manual items to what the backend expects.
 // IMPORTANT: backend requires these fields; send them even if empty:
 // - description (string), colorId (string), recurrence (string), course_name (string), google_event_id (string)
@@ -65,23 +57,18 @@ function normalizeForApi(event, userId) {
     }
   }
 
-  // Never send empty '' for google_event_id (unique index conflict). Use a unique placeholder for manual events.
-  const googleId =
-    (event.google_event_id && String(event.google_event_id).trim()) ||
-    makeManualGoogleEventId(userId);
-
   return {
     summary: event.summary || event.title || 'Untitled',
-    description: event.description ?? '', // required string
+    description: event.description ?? '',
     location: event.location ?? '',
-    eventType: event.eventType || 'event',
+    colorId: event.colorId ?? '1',
+    eventType: event.eventType || 'Event',
     start: startRaw,
     end: endRaw || startRaw,
-    colorId: event.colorId ?? '0', // required string
     recurrence: toRecurrenceString(event.recurrence),
     course_name: event.course_name ?? '',
     user_id: userId,
-    google_event_id: googleId, // unique, never empty
+    google_event_id: String(event.google_event_id).trim() ?? null,
   };
 }
 
@@ -118,19 +105,17 @@ function SyllabusScanner({ user, onLogout }) {
       body: formData,
     });
 
-    const text = await response.text();
     if (!response.ok) {
+      const text = await response.text();
       const msg = prettyDetail(text);
       throw new Error(`Parse failed: ${response.status}\n${msg}`);
     }
 
-    let data = [];
     try {
-      data = text ? JSON.parse(text) : [];
+      return response.json();
     } catch (e) {
       throw new Error('Parse failed: invalid JSON from parser service');
     }
-    return data;
   };
 
   const onUpload = async (file) => {
@@ -178,11 +163,6 @@ function SyllabusScanner({ user, onLogout }) {
     const body = normalizeForApi(event, user.id);
     const url = `${process.env.REACT_APP_BACKEND_URL}/events`;
 
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.debug('POST /events body', body);
-    }
-
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -192,25 +172,18 @@ function SyllabusScanner({ user, onLogout }) {
       body: JSON.stringify(body),
     });
 
-    const text = await response.text();
     if (!response.ok) {
+      const text = await response.text();
       const msg = prettyDetail(text);
       throw new Error(`POST /events failed: ${response.status}\n${msg}`);
     }
 
-    return text ? JSON.parse(text) : null;
+    return response.json();
   };
 
-  // Sequential without loops (no-restricted-syntax safe)
-  const postEvents = () =>
-    selectedItems.reduce(
-      (chain, ev) =>
-        chain.then(() => {
-          const withType = ev.eventType ? ev : { ...ev, eventType: 'event' };
-          return postEvent(withType);
-        }),
-      Promise.resolve(),
-    );
+  const postEvents = async () => {
+    await Promise.all(selectedItems.map((event) => postEvent(event)));
+  };
 
   const handleAddToSite = async () => {
     setError('');
@@ -264,8 +237,6 @@ function SyllabusScanner({ user, onLogout }) {
                 const id = String(Date.now());
                 const nextItem = {
                   id,
-                  // keep UI consistent even if user leaves it blank
-                  eventType: item.eventType || 'event',
                   ...item,
                 };
                 setParsed((prev) => [...prev, nextItem]);

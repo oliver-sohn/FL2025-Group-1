@@ -157,6 +157,7 @@ function ManualAddSection({ onAdd }) {
               value={form.eventType}
               onChange={handleChange('eventType')}
               placeholder="Exam / Lecture / Assignment / Other"
+              required
             />
           </label>
         </div>
