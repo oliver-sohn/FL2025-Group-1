@@ -1,34 +1,51 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import axios from 'axios';
-import { GoogleLogin } from '@react-oauth/google';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import './App.css';
+import axios from 'axios';
 
 function Login({ setUser }) {
-  const handleLoginSuccess = async (credentialResponse) => {
-    try {
-      const res = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/auth/callback`,
-        {
-          token: credentialResponse.credential,
-        },
-      );
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-      setUser(res.data.user);
-    } catch (err) {
-      console.error('Login failed:', err);
-    }
-  };
+  // Check for user info in query params (callback step)
+  useEffect(() => {
+    const verifyToken = async () => {
+      const token = searchParams.get('jwt_token');
 
-  const handleLoginError = () => {
-    console.error('Google login failed');
+      if (!token) return;
+
+      try {
+        const res = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/auth/verify`,
+          { token },
+        );
+        setUser(res.data.user);
+        navigate('/dashboard');
+      } catch (err) {
+        console.error('Token verification failed:', err);
+      }
+    };
+
+    verifyToken();
+  }, [navigate, searchParams, setUser]);
+
+  // Redirect to backend to start Google OAuth
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/auth/login`;
   };
 
   return (
     <div className="login-container">
       <h1>Welcome to the Syllabus Scanner</h1>
       <p>Please sign in using Google</p>
-      <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginError} />
+      <button onClick={handleGoogleLogin} className="google-btn" type="button">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+          alt="Google Logo"
+        />
+        <span>Sign in with Google</span>
+      </button>
     </div>
   );
 }

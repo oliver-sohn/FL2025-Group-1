@@ -5,17 +5,18 @@ from pydantic import BaseModel
 
 
 class UserBase(BaseModel):
-    id: int
     google_id: str
     email: str
     name: str
+    access_token: str
+    token_expires_at: datetime
 
     class Config:
         orm_mode = True
 
 
-class TokenRequest(BaseModel):
-    token: str
+class UserSchema(UserBase):
+    id: int
 
     class Config:
         orm_mode = True

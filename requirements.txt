@@ -13,6 +13,7 @@ ruff
 authlib
 python-jose[cryptography]
 httpx
+PyJWT
 
 # Database
 sqlalchemy[asyncio]

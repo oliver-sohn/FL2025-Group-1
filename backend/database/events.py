@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.routers.schemas import EventBase, EventCreate, EventSchema
+from backend.routers.schemas import EventCreate, EventSchema
 
 from .models import Event as EventModel
 
@@ -39,15 +39,16 @@ def get_event(db: Session, event_id: int) -> Optional[EventSchema]:
     return db.execute(stmt).scalars().first()
 
 
-def update_event(db: Session, event_id: int, updated_event: EventBase) -> EventSchema:
+def update_event(db: Session, event_id: int, updated_event: EventCreate) -> EventSchema:
     stmt = select(EventModel).where(EventModel.id == event_id)
     db_event = db.execute(stmt).scalars().first()
 
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    for field, value in updated_event.dict(exclude_unset=True).items():
-        setattr(db_event, field, value)
+    for field, value in updated_event.items():
+        if value is not None:
+            setattr(db_event, field, value)
 
     db.commit()
     db.refresh(db_event)
