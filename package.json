@@ -2,11 +2,11 @@
   "name": "fl2025-group-1",
   "version": "1.0.0",
   "scripts": {
-    "linter:frontend": "cd frontend/my-app && npm install && npm run linter",
+    "linter:frontend": "cd frontend && npm install && npm run linter",
     "linter:backend": "pip3 install -r backend/requirements.txt && ruff check . --fix && black .",
     "linter": "npm run linter:backend && npm run linter:frontend",
     "start:backend": "pip3 install -r backend/requirements.txt && uvicorn backend.main:app --reload",
-    "start:frontend": "cd frontend/my-app && npm install && npm run start",
+    "start:frontend": "cd frontend && npm install && npm run start",
     "start": "concurrently -n backend,frontend -c blue,green \"npm run start:backend\" \"npm run start:frontend\""
   },
   "devDependencies": {
