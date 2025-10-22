@@ -1,0 +1,11 @@
+FROM docker.io/node:latest
+
+WORKDIR /frontend
+
+RUN apt-get update
+
+COPY package.json .
+
+COPY package-lock.json .
+
+RUN npm install
