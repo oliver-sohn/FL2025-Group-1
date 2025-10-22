@@ -10,7 +10,7 @@ import fitz  # PyMuPDF
 from dateutil import tz as dateutil_tz
 from docx import Document
 
-from backend.routers.schemas import EventDraftSchema as EventDraft
+from routers.schemas import EventDraftSchema as EventDraft
 
 __all__ = ["EventDraft", "parser"]
 

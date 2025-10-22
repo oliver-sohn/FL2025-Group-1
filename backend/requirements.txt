@@ -17,7 +17,7 @@ PyJWT
 
 # Database
 sqlalchemy[asyncio]
-psycopg2
+psycopg2-binary
 
 #parser
 pydantic

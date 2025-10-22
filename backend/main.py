@@ -5,10 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from backend.database.db import Base, engine
-from backend.routers.auth import router as auth_router
-from backend.routers.events import router as event_router
-from backend.routers.parser import router as parser_router
+from database.db import Base, engine
+from routers.auth import router as auth_router
+from routers.events import router as event_router
+from routers.parser import router as parser_router
 
 load_dotenv()
 

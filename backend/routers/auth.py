@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from backend.database.db import get_db
-from backend.database.users import (
+from database.db import get_db
+from database.users import (
     select_user_by_google_id,
     select_user_by_id,
     upsert_user_sync,

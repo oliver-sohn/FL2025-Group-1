@@ -17,7 +17,7 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci
-        working-directory: ./frontend/my-app
+        working-directory: ./frontend
 
       - name: Run ESLint and Prettier
         run: |
@@ -25,4 +25,4 @@ jobs:
           npx eslint . --ext .js,.jsx,.ts,.tsx || FAIL=1
           npx prettier --check . || FAIL=1
           exit $FAIL
-        working-directory: ./frontend/my-app
+        working-directory: ./frontend

@@ -3,9 +3,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from backend.database.db import get_db
-from backend.parser.parser_app import parser as parse_syllabus
-from backend.routers.schemas import EventDraftSchema
+from database.db import get_db
+from parser.parser_app import parser as parse_syllabus
+from routers.schemas import EventDraftSchema
 
 router = APIRouter(prefix="/parse", tags=["Parser"])
 
