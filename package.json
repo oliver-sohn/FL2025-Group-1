@@ -5,7 +5,7 @@
     "linter:frontend": "cd frontend && npm install && npm run linter",
     "linter:backend": "pip3 install -r backend/requirements.txt && ruff check . --fix && black .",
     "linter": "npm run linter:backend && npm run linter:frontend",
-    "start:backend": "pip3 install -r backend/requirements.txt && uvicorn backend.main:app --reload",
+    "start:backend": "pip3 install -r backend/requirements.txt && cd backend && uvicorn main:app --reload",
     "start:frontend": "cd frontend && npm install && npm run start",
     "start": "concurrently -n backend,frontend -c blue,green \"npm run start:backend\" \"npm run start:frontend\""
   },
