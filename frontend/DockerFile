@@ -4,8 +4,8 @@ WORKDIR /frontend
 
 RUN apt-get update
 
-COPY my-app/package.json .
+COPY package.json .
 
-COPY my-app/package-lock.json .
+COPY package-lock.json .
 
 RUN npm install
