@@ -17,6 +17,7 @@ jobs:
 
       - name: Install backend dependencies
         run: pip install -r requirements.txt
+        working-directory: ./frontend
 
       - name: Run Ruff and Black
         run: |
@@ -24,3 +25,4 @@ jobs:
           ruff check . || FAIL=1
           black --check . || FAIL=1
           exit $FAIL
+        working-directory: ./frontend
