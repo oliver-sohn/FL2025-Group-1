@@ -20,7 +20,7 @@ const colorFromId = (id) => {
   return map?.[String(id)] || '#10b981';
 };
 
-// date formating
+// date formatting helpers
 const toDate = (val) => (val instanceof Date ? val : new Date(val));
 const sameDay = (a, b) =>
   a.getFullYear() === b.getFullYear() &&
@@ -46,20 +46,45 @@ function formatRange(start, end) {
   return `${fmtDate.format(s)}, ${fmtTime.format(s)} → ${fmtDate.format(e)}, ${fmtTime.format(e)}`;
 }
 
-// event display section
-function EventsSection({ events, loading, onRefresh }) {
-  const list = Array.isArray(events) ? events : [];
+function EventsSection({ events, loading, onRefresh, onAddClick }) {
+  // ✅ Memoize list to avoid re-creation
+  const list = React.useMemo(
+    () => (Array.isArray(events) ? events : []),
+    [events],
+  );
   const isEmpty = list.length === 0;
+
+  // ✅ sort events chronologically (earliest first)
+  const safeTime = (v) => {
+    const t = v instanceof Date ? v.getTime() : new Date(v).getTime();
+    return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY; // invalids go last
+  };
+
+  const sortedList = React.useMemo(
+    () => [...list].sort((a, b) => safeTime(a.start) - safeTime(b.start)),
+    [list],
+  );
 
   return (
     <CardSection
       title="Events"
       action={
-        onRefresh ? (
-          <button type="button" className="btn btn-ghost" onClick={onRefresh}>
-            Refresh
+        <div style={{ display: 'flex', gap: 8 }}>
+          {onRefresh && (
+            <button type="button" className="btn btn-ghost" onClick={onRefresh}>
+              Refresh
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary"
+            aria-label="Add Event"
+            title="Add Event"
+            onClick={() => onAddClick?.('event')}
+          >
+            ＋
           </button>
-        ) : null
+        </div>
       }
     >
       {loading && (
@@ -71,13 +96,13 @@ function EventsSection({ events, loading, onRefresh }) {
 
       {!loading && isEmpty && (
         <p className="empty-state">
-          No events yet. Upload your syllabus to get started
+          No events yet. Upload your syllabus or add one manually!
         </p>
       )}
 
       {!loading && !isEmpty && (
         <ul className="list event-list">
-          {list.map((ev) => {
+          {sortedList.map((ev) => {
             const accent = colorFromId(ev?.colorId);
             return (
               <li
@@ -139,16 +164,17 @@ const EventShape = PropTypes.shape({
 });
 
 EventsSection.propTypes = {
-  events: PropTypes.arrayOf(EventShape), // may be undefined on first render
+  events: PropTypes.arrayOf(EventShape),
   loading: PropTypes.bool,
   onRefresh: PropTypes.func,
+  onAddClick: PropTypes.func, // new prop for “+” button
 };
 
-// keep eslint happy and provide sane defaults
 EventsSection.defaultProps = {
   events: [],
   loading: false,
   onRefresh: null,
+  onAddClick: null,
 };
 
 export default EventsSection;
