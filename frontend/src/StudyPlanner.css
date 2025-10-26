@@ -1,0 +1,333 @@
+/* StudyPlannerStyles.css */
+
+/* Header Section */
+.study-planner-header {
+  margin-bottom: 1.5rem;
+}
+
+.study-planner-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.study-planner-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.study-planner-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.study-planner-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #065f46;
+}
+
+.study-planner-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #10b981;
+}
+
+.study-planner-btn-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Week Navigation */
+.study-planner-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.study-planner-week-label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #064e3b;
+}
+
+/* Preferences Panel */
+.preferences-card {
+  margin-bottom: 1.5rem;
+}
+
+.preferences-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.preferences-field-label {
+  font-weight: bold;
+  color: #065f46;
+  margin-bottom: 0.5rem;
+}
+
+.preferences-days-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.preferences-day-btn {
+  padding: 0.55rem 0.9rem;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.preferences-day-btn-active {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+}
+
+.preferences-time-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preferences-time-separator {
+  color: #065f46;
+}
+
+.preferences-duration-input {
+  width: 80px;
+}
+
+.preferences-buffer-label {
+  font-size: 0.9rem;
+  color: #065f46;
+}
+
+.preferences-buffer-input {
+  width: 70px;
+}
+
+/* Calendar Grid */
+.calendar-header {
+  border-bottom: 1px dashed #9ae6b4;
+  background-color: #d1fae5;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  border-bottom: 1px dashed #9ae6b4;
+}
+
+.calendar-time-cell {
+  padding: 0.75rem;
+  border-right: 1px dashed #9ae6b4;
+}
+
+.calendar-day-cell {
+  padding: 0.75rem;
+  text-align: center;
+  border-right: 1px dashed #9ae6b4;
+  font-weight: bold;
+  color: #064e3b;
+}
+
+.calendar-day-name {
+  font-weight: bold;
+}
+
+.calendar-day-number {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* Calendar Body */
+.calendar-body {
+  position: relative;
+  height: 720px;
+  overflow: auto;
+}
+
+.calendar-body-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  height: 100%;
+}
+
+.calendar-time-column {
+  border-right: 1px dashed #9ae6b4;
+  background-color: #f8fffe;
+}
+
+.calendar-hour-cell {
+  height: 60px;
+  border-bottom: 1px dashed #9ae6b4;
+  padding: 0.25rem 0.5rem;
+  text-align: right;
+  font-size: 0.75rem;
+  color: #065f46;
+}
+
+.calendar-day-column {
+  position: relative;
+  border-right: 1px dashed #9ae6b4;
+}
+
+.calendar-hour-row {
+  height: 60px;
+  border-bottom: 1px dashed #9ae6b4;
+}
+
+/* Events */
+.calendar-event {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  background-color: #10b981;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  overflow: hidden;
+  z-index: 20;
+  border: 1px solid #059669;
+}
+
+.calendar-event-title {
+  font-weight: bold;
+}
+
+.calendar-event-time {
+  opacity: 0.9;
+}
+
+/* Study Blocks */
+.study-block {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  overflow: hidden;
+  z-index: 10;
+  text-align: left;
+  transition: all 0.15s ease;
+  font-family: Monaco, Consolas, 'Courier New', monospace;
+}
+
+.study-block-preferred {
+  background-color: #d1fae5;
+  border: 2px dashed #10b981;
+}
+
+.study-block-other {
+  background-color: #fef3c7;
+  border: 2px dashed #f59e0b;
+}
+
+.study-block:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.study-block-preferred:hover:not(:disabled) {
+  background-color: #a7f3d0;
+}
+
+.study-block-other:hover:not(:disabled) {
+  background-color: #fde68a;
+}
+
+.study-block:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.study-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.study-block-title {
+  font-weight: bold;
+  color: #064e3b;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.study-block-time {
+  color: #065f46;
+  margin-top: 0.1rem;
+}
+
+.study-block-duration {
+  color: #047857;
+  font-size: 0.7rem;
+}
+
+.study-block-check {
+  color: #059669;
+}
+
+/* Legend */
+.legend-card {
+  margin-top: 1rem;
+}
+
+.legend-body {
+  padding: 0.75rem;
+}
+
+.legend-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.legend-box-event {
+  background-color: #10b981;
+  border: 1px solid #059669;
+}
+
+.legend-box-preferred {
+  background-color: #d1fae5;
+  border: 2px dashed #10b981;
+}
+
+.legend-box-other {
+  background-color: #fef3c7;
+  border: 2px dashed #f59e0b;
+}
+
+.legend-text {
+  font-size: 0.9rem;
+  color: #065f46;
+}

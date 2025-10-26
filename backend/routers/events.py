@@ -1,13 +1,10 @@
 from typing import List
 
-import requests
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import events as crud_events
 from database.db import get_db
-from database.models import User
-from database.users import select_user_by_id
 from routers.schemas import EventCreate, EventSchema
 
 router = APIRouter(prefix="/events", tags=["Events"])
