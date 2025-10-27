@@ -331,3 +331,110 @@
   font-size: 0.9rem;
   color: #065f46;
 }
+
+/* Confirmation Modal */
+.confirmation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirmation-modal {
+  background: #ffffff;
+  border: 2px dashed #9ae6b4;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 450px;
+  font-family: Monaco, Consolas, 'Courier New', monospace;
+}
+
+.confirmation-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #d1fae5;
+  padding: 1rem 1.25rem;
+  border-bottom: 2px dashed #9ae6b4;
+  border-radius: 10px 10px 0 0;
+}
+
+.confirmation-modal-header h3 {
+  margin: 0;
+  color: #065f46;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.confirmation-modal-close {
+  background: none;
+  border: none;
+  color: #065f46;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.confirmation-modal-close:hover {
+  color: #047857;
+}
+
+.confirmation-modal-body {
+  padding: 1.5rem 1.25rem;
+}
+
+.confirmation-modal-body p {
+  margin: 0.75rem 0;
+  color: #065f46;
+  font-size: 0.95rem;
+}
+
+.confirmation-modal-body strong {
+  color: #047857;
+  font-weight: bold;
+}
+
+.confirmation-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 1rem 1.25rem;
+  border-top: 1px dashed #9ae6b4;
+}
+
+/* Selected study block highlight */
+.study-block-selected {
+  border-width: 3px !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+}
+
+/* Update calendar hour cell for 24-hour view */
+.calendar-hour-cell {
+  height: 40px;
+  border-bottom: 1px dashed #9ae6b4;
+  padding: 0.25rem 0.5rem;
+  text-align: right;
+  font-size: 0.75rem;
+  color: #065f46;
+}
+
+.calendar-hour-row {
+  height: 40px;
+  border-bottom: 1px dashed #9ae6b4;
+}
+
+/* Adjust calendar body height for 24 hours */
+.calendar-body {
+  position: relative;
+  height: 960px;
+  overflow: auto;
+}

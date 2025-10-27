@@ -8,6 +8,7 @@ import {
   Plus,
   Check,
   RefreshCw,
+  X,
 } from 'lucide-react';
 import NavBar from './NavBar';
 import './App.css';
@@ -41,7 +42,6 @@ const findGaps = (dayStart, dayEnd, events, bufferBefore, bufferAfter) => {
   return gaps;
 };
 
-// Study block generation logic
 const generateStudyBlocks = (events, weekStart, preferences) => {
   const blocks = [];
 
@@ -100,9 +100,16 @@ const generateStudyBlocks = (events, weekStart, preferences) => {
             blockStart.getTime() + blockDuration * 60 * 1000,
           );
 
-          const matchesPreferences = preferredDays.includes(
-            blockStart.getDay(),
-          );
+          const blockStartHour =
+            blockStart.getHours() + blockStart.getMinutes() / 60;
+          const blockEndHour = blockEnd.getHours() + blockEnd.getMinutes() / 60;
+          const prefStartHour = startHour + startMin / 60;
+          const prefEndHour = endHour + endMin / 60;
+
+          const matchesPreferences =
+            preferredDays.includes(blockStart.getDay()) &&
+            blockStartHour >= prefStartHour &&
+            blockEndHour <= prefEndHour;
 
           blocks.push({
             start: blockStart.toISOString(),
@@ -129,13 +136,13 @@ const api = {
     return data;
   },
   addStudyBlock: async (userId, summary, start, end) => {
-    // await fetch('/api/calendar/events', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ user_id: userId, summary, start, end }),
-    // });
     console.log('Adding study block:', { userId, summary, start, end });
-    return { id: Math.random().toString(), status: 'confirmed' };
+    const url = `${process.env.REACT_APP_BACKEND_URL}/gcal/study-block?user_id=${userId}&summary=${summary}&start=${start}&end=${end}`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, summary, start, end }),
+    });
   },
 };
 
@@ -152,11 +159,12 @@ function StudyPlanner({ user, onLogout }) {
   const [showPreferences, setShowPreferences] = useState(false);
   const [showOnlyMatching, setShowOnlyMatching] = useState(false);
   const [addingBlock, setAddingBlock] = useState(null);
+  const [selectedBlock, setSelectedBlock] = useState(null);
 
   const [preferences, setPreferences] = useState({
     preferredDays: [1, 2, 3, 4, 5],
-    preferredStartTime: '09:00',
-    preferredEndTime: '21:00',
+    preferredStartTime: '00:00',
+    preferredEndTime: '23:59',
     minBlockDuration: 30,
     maxBlockDuration: 120,
     bufferBefore: 15,
@@ -187,16 +195,27 @@ function StudyPlanner({ user, onLogout }) {
   }, [loadCalendar]);
 
   useEffect(() => {
-    if (events.length > 0) {
-      const blocks = generateStudyBlocks(events, currentWeekStart, preferences);
-      setStudyBlocks(blocks);
-    }
+    const blocks = generateStudyBlocks(events, currentWeekStart, preferences);
+    setStudyBlocks(blocks);
   }, [events, preferences, currentWeekStart]);
 
-  const handleAddStudyBlock = async (block) => {
-    setAddingBlock(block.start);
+  const handleBlockClick = (block) => {
+    setSelectedBlock(block);
+  };
+
+  const handleConfirmAddBlock = async () => {
+    if (!selectedBlock) return;
+
+    setAddingBlock(selectedBlock.start);
+    setSelectedBlock(null);
+
     try {
-      await api.addStudyBlock(user.id, 'Study Block', block.start, block.end);
+      await api.addStudyBlock(
+        user.id,
+        'Study Block',
+        selectedBlock.start,
+        selectedBlock.end,
+      );
 
       await loadCalendar();
     } catch (error) {
@@ -204,6 +223,10 @@ function StudyPlanner({ user, onLogout }) {
       alert('Failed to add study block. Please try again.');
     }
     setAddingBlock(null);
+  };
+
+  const handleCancelAddBlock = () => {
+    setSelectedBlock(null);
   };
 
   const regenerateBlocks = () => {
@@ -224,7 +247,7 @@ function StudyPlanner({ user, onLogout }) {
     setCurrentWeekStart(newDate);
   };
 
-  const hours = Array.from({ length: 13 }, (_, i) => i + 9);
+  const hours = Array.from({ length: 24 }, (_, i) => i);
   const weekDays = getWeekDays();
 
   const getEventPosition = (startTime, endTime) => {
@@ -234,8 +257,8 @@ function StudyPlanner({ user, onLogout }) {
     const startHour = start.getHours() + start.getMinutes() / 60;
     const endHour = end.getHours() + end.getMinutes() / 60;
 
-    const top = ((startHour - 9) / 12) * 100;
-    const height = ((endHour - startHour) / 12) * 100;
+    const top = (startHour / 24) * 100;
+    const height = ((endHour - startHour) / 24) * 100;
 
     return { top: `${top}%`, height: `${height}%` };
   };
@@ -262,6 +285,13 @@ function StudyPlanner({ user, onLogout }) {
       hour: 'numeric',
       minute: '2-digit',
     });
+  };
+
+  const formatHour = (hour) => {
+    if (hour === 0) return '12 AM';
+    if (hour < 12) return `${hour} AM`;
+    if (hour === 12) return '12 PM';
+    return `${hour - 12} PM`;
   };
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -501,6 +531,58 @@ function StudyPlanner({ user, onLogout }) {
           </div>
         )}
 
+        {selectedBlock && (
+          <div className="confirmation-modal-overlay">
+            <div className="confirmation-modal">
+              <div className="confirmation-modal-header">
+                <h3>Add Study Block?</h3>
+                <button
+                  type="button"
+                  onClick={handleCancelAddBlock}
+                  className="confirmation-modal-close"
+                  aria-label="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="confirmation-modal-body">
+                <p>
+                  <strong>Time:</strong> {formatTime(selectedBlock.start)} -{' '}
+                  {formatTime(selectedBlock.end)}
+                </p>
+                <p>
+                  <strong>Duration:</strong> {selectedBlock.duration} minutes
+                </p>
+                <p>
+                  <strong>Date:</strong>{' '}
+                  {new Date(selectedBlock.start).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+              <div className="confirmation-modal-actions">
+                <button
+                  type="button"
+                  onClick={handleCancelAddBlock}
+                  className="btn btn-ghost"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmAddBlock}
+                  className="btn btn-primary"
+                >
+                  <Check size={14} />
+                  Add to Calendar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="card">
           <div className="calendar-header">
             <div className="calendar-grid">
@@ -524,7 +606,7 @@ function StudyPlanner({ user, onLogout }) {
               <div className="calendar-time-column">
                 {hours.map((hour) => (
                   <div key={hour} className="calendar-hour-cell">
-                    {hour % 12 || 12} {hour < 12 ? 'AM' : 'PM'}
+                    {formatHour(hour)}
                   </div>
                 ))}
               </div>
@@ -559,6 +641,7 @@ function StudyPlanner({ user, onLogout }) {
                   {getStudyBlocksForDay(day).map((block) => {
                     const pos = getEventPosition(block.start, block.end);
                     const isAdding = addingBlock === block.start;
+                    const isSelected = selectedBlock?.start === block.start;
 
                     return (
                       <button
@@ -568,9 +651,9 @@ function StudyPlanner({ user, onLogout }) {
                           block.matchesPreferences
                             ? 'study-block-preferred'
                             : 'study-block-other'
-                        }`}
+                        } ${isSelected ? 'study-block-selected' : ''}`}
                         style={{ top: pos.top, height: pos.height }}
-                        onClick={() => !isAdding && handleAddStudyBlock(block)}
+                        onClick={() => !isAdding && handleBlockClick(block)}
                         disabled={isAdding}
                       >
                         <div className="study-block-header">
