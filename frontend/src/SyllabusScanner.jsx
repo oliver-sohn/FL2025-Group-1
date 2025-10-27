@@ -194,7 +194,7 @@ function SyllabusScanner({ user, onLogout }) {
 
   const postEventToGCal = async (eventId) => {
     const userId = user.id;
-    const url = `${process.env.REACT_APP_BACKEND_URL}/events/google?event_id=${eventId}&user_id=${userId}`;
+    const url = `${process.env.REACT_APP_BACKEND_URL}/gcal/add-event?event_id=${eventId}&user_id=${userId}`;
     const response = await fetch(url, {
       method: 'POST',
     });
