@@ -477,12 +477,22 @@
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes popIn {
-  from { transform: translateY(10px); opacity: 0.98; }
-  to { transform: translateY(4px); opacity: 1; }
+  from {
+    transform: translateY(10px);
+    opacity: 0.98;
+  }
+  to {
+    transform: translateY(4px);
+    opacity: 1;
+  }
 }
 
 /* Respect reduced motion */
@@ -514,7 +524,6 @@
     border-style: solid;
   }
 }
-
 
 /* ---------- Syllabus Scanner UI ---------- */
 
