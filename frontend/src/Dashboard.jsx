@@ -6,6 +6,7 @@ import EventsSection from './components/EventSection';
 import AssignmentsSection from './components/AssignmentSection';
 import ExamsSection from './components/ExamSection';
 import './App.css';
+import EventShape from './components/propTypes';
 
 /** ---------- helpers (hoisted to avoid hook deps noise) ---------- */
 
@@ -83,8 +84,17 @@ const prettyDetail = (text) => {
 
 /** ---------------- modal ---------------- */
 
-function ManualAddModal({ isOpen, defaultType, onClose, onSubmit }) {
-  const [form, setForm] = useState({
+// --- ManualAddModal (drop-in replacement) ---
+
+function ManualAddModal({
+  isOpen,
+  defaultType = 'event',
+  initialValues = null, // <- NEW
+  mode = 'add', // 'add' | 'edit'  <- NEW
+  onClose,
+  onSubmit,
+}) {
+  const [form, setForm] = React.useState({
     title: '',
     date: '',
     time: '',
@@ -93,109 +103,215 @@ function ManualAddModal({ isOpen, defaultType, onClose, onSubmit }) {
     eventType: defaultType || 'event',
   });
 
-  React.useEffect(() => {
-    if (isOpen) setForm((f) => ({ ...f, eventType: defaultType || 'event' }));
-  }, [isOpen, defaultType]);
+  const dialogRef = React.useRef(null);
+  const firstInputRef = React.useRef(null);
 
-  if (!isOpen) return null;
+  // hydrate form when opening (always cleanup)
+  React.useEffect(() => {
+    let timeoutId = null;
+    let prevOverflow;
+
+    if (isOpen) {
+      // If editing, prefill from initialValues
+      if (initialValues) {
+        // Convert incoming start into separate date/time if present
+        let date = '';
+        let time = '';
+        if (initialValues.start) {
+          const d = new Date(initialValues.start);
+          if (!Number.isNaN(d.getTime())) {
+            const yyyy = String(d.getFullYear()).padStart(4, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            date = `${yyyy}-${mm}-${dd}`;
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mi = String(d.getMinutes()).padStart(2, '0');
+            if (hh !== '00' || mi !== '00') time = `${hh}:${mi}`;
+          }
+        }
+
+        setForm({
+          title: initialValues.summary || '',
+          date,
+          time,
+          location: initialValues.location || '',
+          description: initialValues.description || '',
+          eventType: initialValues.eventType || defaultType || 'event',
+        });
+      } else {
+        setForm((f) => ({ ...f, eventType: defaultType || 'event' }));
+      }
+
+      // focus first field
+      timeoutId = window.setTimeout(() => {
+        firstInputRef.current?.focus();
+      }, 0);
+
+      if (typeof document !== 'undefined') {
+        prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      if (typeof document !== 'undefined' && prevOverflow !== undefined) {
+        document.body.style.overflow = prevOverflow;
+      }
+    };
+  }, [isOpen, defaultType, initialValues]);
+
+  // ESC to close
+  React.useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+
+    if (isOpen && typeof window !== 'undefined') {
+      window.addEventListener('keydown', onKey);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('keydown', onKey);
+      }
+    };
+  }, [isOpen, onClose]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.title || !form.date) return;
-    onSubmit(form);
+    if (form.title && form.date) {
+      onSubmit(form);
+    }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal">
-        <div className="modal-header">
-          <h3>Add {form.eventType}</h3>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Close"
-            onClick={onClose}
-          >
-            ✕
-          </button>
+    <>
+      <button
+        type="button"
+        className="modal-overlay"
+        aria-label="Close modal"
+        onClick={onClose}
+      />
+      <div
+        className="modal-backdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="manual-add-title"
+      >
+        <div className="modal" ref={dialogRef}>
+          <div className="modal-header">
+            <h3 id="manual-add-title">
+              {mode === 'edit'
+                ? `Edit ${form.eventType}`
+                : `Add ${form.eventType}`}
+            </h3>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Close"
+              onClick={onClose}
+            >
+              ✕
+            </button>
+          </div>
+
+          <form className="manual-form" onSubmit={handleSubmit}>
+            <div className="row">
+              <label className="field grow" htmlFor="manual-title">
+                <span>Title</span>
+                <input
+                  id="manual-title"
+                  ref={firstInputRef}
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Exam 1 / HW 2 / Guest lecture…"
+                  required
+                />
+              </label>
+            </div>
+
+            <div className="row">
+              <label className="field" htmlFor="manual-date">
+                <span>Date</span>
+                <input
+                  id="manual-date"
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  required
+                />
+              </label>
+
+              <label className="field" htmlFor="manual-time">
+                <span>Time (optional)</span>
+                <input
+                  id="manual-time"
+                  type="time"
+                  value={form.time}
+                  onChange={(e) => setForm({ ...form, time: e.target.value })}
+                />
+              </label>
+
+              <label className="field grow" htmlFor="manual-location">
+                <span>Location (optional)</span>
+                <input
+                  id="manual-location"
+                  type="text"
+                  value={form.location}
+                  onChange={(e) =>
+                    setForm({ ...form, location: e.target.value })
+                  }
+                  placeholder="Zoom / Room 2.118"
+                />
+              </label>
+            </div>
+
+            <div className="row">
+              <label className="field grow" htmlFor="manual-description">
+                <span>Description (optional)</span>
+                <textarea
+                  id="manual-description"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                  placeholder="Anything else to remember…"
+                />
+              </label>
+            </div>
+
+            <div className="row actions-right">
+              <button className="btn btn-ghost" type="button" onClick={onClose}>
+                Cancel
+              </button>
+              <button className="btn" type="submit">
+                {mode === 'edit' ? 'Save' : 'Add'}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form className="manual-form" onSubmit={handleSubmit}>
-          <div className="row">
-            <label className="field grow" htmlFor="title">
-              <span>Title</span>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Exam 1 / HW 2 / Guest lecture…"
-                required
-              />
-            </label>
-          </div>
-
-          <div className="row">
-            <label className="field" htmlFor="date">
-              <span>Date</span>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                required
-              />
-            </label>
-            <label className="field" htmlFor="time">
-              <span>Time (optional)</span>
-              <input
-                type="time"
-                value={form.time}
-                onChange={(e) => setForm({ ...form, time: e.target.value })}
-              />
-            </label>
-            <label className="field grow" htmlFor="location">
-              <span>Location (optional)</span>
-              <input
-                type="text"
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
-                placeholder="Zoom / Room 2.118"
-              />
-            </label>
-          </div>
-
-          <div className="row">
-            <label className="field grow" htmlFor="description">
-              <span>Description (optional)</span>
-              <textarea
-                rows={3}
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                placeholder="Anything else to remember…"
-              />
-            </label>
-          </div>
-
-          <div className="row actions-right">
-            <button className="btn btn-ghost" type="button" onClick={onClose}>
-              Cancel
-            </button>
-            <button className="btn" type="submit">
-              Add
-            </button>
-          </div>
-        </form>
       </div>
-    </div>
+    </>
   );
 }
 
 ManualAddModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   defaultType: PropTypes.string,
+  initialValues: EventShape,
+  mode: PropTypes.oneOf(['add', 'edit']),
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
+};
+
+ManualAddModal.defaultProps = {
+  defaultType: 'event',
+  initialValues: null,
+  mode: 'add',
 };
 
 ManualAddModal.defaultProps = {
@@ -210,7 +326,8 @@ function Dashboard({ user, onLogout }) {
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [modalDefaultType, setModalDefaultType] = useState('event');
-
+  const [editId, setEditId] = useState(null);
+  const [editInitialValues, setEditInitialValues] = useState(null);
   // memoize raw list to keep downstream memos stable
   const list = useMemo(() => (Array.isArray(events) ? events : []), [events]);
 
@@ -268,19 +385,21 @@ function Dashboard({ user, onLogout }) {
 
   // modal controls
   const openAddFor = (defaultType) => {
+    setEditId(null);
+    setEditInitialValues(null);
     setModalDefaultType(defaultType);
     setModalOpen(true);
   };
   const closeModal = () => {
     setModalOpen(false);
+    setEditId(null);
+    setEditInitialValues(null);
     setError('');
   };
-
   // POST
   const postEvent = async (manualForm) => {
     const body = normalizeManualFormToApi(manualForm, user.id);
     const url = `${process.env.REACT_APP_BACKEND_URL}/events`;
-
     const res = await fetch(url, {
       method: 'POST',
       headers: {
@@ -289,7 +408,6 @@ function Dashboard({ user, onLogout }) {
       },
       body: JSON.stringify(body),
     });
-
     if (!res.ok) {
       const text = await res.text();
       throw new Error(
@@ -299,11 +417,67 @@ function Dashboard({ user, onLogout }) {
     return res.json();
   };
 
+  // modal controls
+
+  const openEditFor = (ev) => {
+    setEditId(ev.id);
+    setEditInitialValues(ev);
+    setModalDefaultType(ev.eventType || 'event');
+    setModalOpen(true);
+  };
+
+  // NEW: PUT (update)
+  const putEvent = async (id, manualForm) => {
+    const body = normalizeManualFormToApi(manualForm, user.id);
+    const url = `${process.env.REACT_APP_BACKEND_URL}/events/${id}`;
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(
+        `PUT /events/${id} failed: ${res.status}\n${prettyDetail(text)}`,
+      );
+    }
+    return res.json();
+  };
+
+  // NEW: DELETE
+  const deleteEvent = async (id) => {
+    const url = `${process.env.REACT_APP_BACKEND_URL}/events/${id}`;
+    const res = await fetch(url, { method: 'DELETE' });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(
+        `DELETE /events/${id} failed: ${res.status}\n${prettyDetail(text)}`,
+      );
+    }
+  };
+
   const handleManualSubmit = async (manualForm) => {
     setError('');
     try {
-      await postEvent(manualForm);
+      if (editId) {
+        await putEvent(editId, manualForm);
+      } else {
+        await postEvent(manualForm);
+      }
       closeModal();
+      await fetchEvents();
+    } catch (e) {
+      setError(String(e.message || e));
+    }
+  };
+
+  const handleRowDelete = async (id) => {
+    setError('');
+    try {
+      await deleteEvent(id);
       await fetchEvents();
     } catch (e) {
       setError(String(e.message || e));
@@ -314,29 +488,52 @@ function Dashboard({ user, onLogout }) {
     <div className="dashboard">
       <NavBar user={user} onLogout={onLogout} />
       <main className="dashboard-main">
-        <h2 className="page-title">This is your Dashboard</h2>
+        <h2 className="page-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="23"
+            height="23"
+            fill="currentColor"
+            className="bi bi-house"
+            viewBox="0 0 16 16"
+          >
+            <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z" />
+          </svg>{' '}
+          Dashboard
+        </h2>
+        <h3 className="page-subtitle">
+          See all your upcoming events, assingments, quizzes, and exams
+        </h3>
 
         <div className="cards-grid">
-          <EventsSection
-            loading={loading}
-            events={grouped.events}
-            onRefresh={fetchEvents}
-            onAddClick={() => openAddFor('event')}
-          />
+          <div className="cards-grid">
+            <EventsSection
+              loading={loading}
+              events={grouped.events}
+              onRefresh={fetchEvents}
+              onAddClick={() => openAddFor('event')}
+              onEdit={openEditFor} // NEW
+              onDelete={(id) => handleRowDelete(id)} // NEW
+            />
 
-          <AssignmentsSection
-            loading={loading}
-            items={grouped.assignments}
-            onRefresh={fetchEvents}
-            onAddClick={() => openAddFor('assignment')}
-          />
+            <AssignmentsSection
+              loading={loading}
+              items={grouped.assignments}
+              onRefresh={fetchEvents}
+              onAddClick={() => openAddFor('assignment')}
+              onEdit={openEditFor} // NEW
+              onDelete={(id) => handleRowDelete(id)} // NEW
+            />
 
-          <ExamsSection
-            loading={loading}
-            items={grouped.exams}
-            onRefresh={fetchEvents}
-            onAddClick={() => openAddFor('exam')}
-          />
+            <ExamsSection
+              loading={loading}
+              items={grouped.exams}
+              onRefresh={fetchEvents}
+              onAddClick={() => openAddFor('exam')}
+              onEdit={openEditFor} // NEW
+              onDelete={(id) => handleRowDelete(id)} // NEW
+            />
+          </div>
         </div>
 
         {error && (
@@ -353,6 +550,8 @@ function Dashboard({ user, onLogout }) {
       <ManualAddModal
         isOpen={modalOpen}
         defaultType={modalDefaultType}
+        initialValues={editInitialValues} // <-- use your state
+        mode={editId ? 'edit' : 'add'} // <-- tell modal which mode
         onClose={closeModal}
         onSubmit={handleManualSubmit}
       />

@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import CardSection from './CardSection';
+import EventShape from './propTypes';
 
 // map Google Calendar colorId → hex
 const colorFromId = (id) => {
@@ -47,7 +48,14 @@ function formatRange(start, end) {
   return `${fmtDate.format(s)}, ${fmtTime.format(s)} → ${fmtDate.format(e)}, ${fmtTime.format(e)}`;
 }
 
-function AssignmentsSection({ items, loading, onRefresh, onAddClick }) {
+function AssignmentsSection({
+  items,
+  loading,
+  onRefresh,
+  onAddClick,
+  onEdit,
+  onDelete,
+}) {
   const list = Array.isArray(items) ? items : [];
   const isEmpty = !loading && list.length === 0;
 
@@ -119,6 +127,27 @@ function AssignmentsSection({ items, loading, onRefresh, onAddClick }) {
                     </p>
                   ) : null}
                 </div>
+
+                <div className="item-actions">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => onEdit?.(ev)}
+                    aria-label={`Edit ${ev.summary}`}
+                    title="Edit"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => onDelete?.(ev.id)}
+                    aria-label={`Delete ${ev.summary}`}
+                    title="Delete"
+                  >
+                    Delete
+                  </button>
+                </div>
               </li>
             );
           })}
@@ -128,28 +157,13 @@ function AssignmentsSection({ items, loading, onRefresh, onAddClick }) {
   );
 }
 
-const EventShape = PropTypes.shape({
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  user_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  google_event_id: PropTypes.string,
-  summary: PropTypes.string.isRequired,
-  description: PropTypes.string,
-  location: PropTypes.string,
-  colorId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  eventType: PropTypes.string.isRequired,
-  start: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)])
-    .isRequired,
-  end: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)])
-    .isRequired,
-  recurrence: PropTypes.string,
-  course_name: PropTypes.string,
-});
-
 AssignmentsSection.propTypes = {
   items: PropTypes.arrayOf(EventShape),
   loading: PropTypes.bool,
   onRefresh: PropTypes.func,
   onAddClick: PropTypes.func,
+  onEdit: PropTypes.func, // NEW
+  onDelete: PropTypes.func, // NEW
 };
 
 AssignmentsSection.defaultProps = {
@@ -157,6 +171,8 @@ AssignmentsSection.defaultProps = {
   loading: false,
   onRefresh: null,
   onAddClick: undefined,
+  onEdit: null,
+  onDelete: null,
 };
 
 export default AssignmentsSection;
