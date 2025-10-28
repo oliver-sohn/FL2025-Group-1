@@ -40,11 +40,12 @@ def post_event_to_google(user_id: int, event_id: int, db: Session = Depends(get_
     resp = requests.post(url, headers=headers, json=data)
 
     if resp.status_code == 200:
-        data = resp.json()
-        updated_event = {"google_event_id": data.get("id")}
-        event = crud_events.update_event(
-            db, event_id=event_id, updated_event=updated_event
-        )
+        resp_data = resp.json() or {}
+        google_event_id = resp_data.get("id", None)
+        event.google_event_id = google_event_id
+        db.commit()
+        db.refresh(event)
+        print(event)
         return event
     else:
         raise Exception("Error uploading event to GCal")
