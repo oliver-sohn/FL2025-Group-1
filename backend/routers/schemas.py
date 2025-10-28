@@ -28,7 +28,7 @@ class EventBase(BaseModel):
     description: Optional[str]
     location: Optional[str]
     colorId: Optional[str]
-    eventType: str
+    eventType: str = "event"
 
     # Timing
     start: datetime
@@ -63,7 +63,7 @@ class EventDraftSchema(BaseModel):
     description: Optional[str] = None
     location: Optional[str] = None
     colorId: Optional[str] = None
-    eventType: str = "Event"
+    eventType: str = "event"
 
     start: datetime
     end: Optional[datetime] = None

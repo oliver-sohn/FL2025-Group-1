@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { FileScan } from 'lucide-react';
 import PropTypes from 'prop-types';
 import NavBar from './NavBar';
 import CardSection from './components/CardSection';
@@ -255,7 +256,10 @@ function SyllabusScanner({ user, onLogout }) {
     <div className="dashboard">
       <NavBar user={user} onLogout={onLogout} />
       <main className="dashboard-main">
-        <h2 className="page-title">Syllabus Scanner</h2>
+        <h2 className="page-title">
+          <FileScan size={24} />
+          Syllabus Scanner
+        </h2>
 
         {step === 'idle' && (
           <CardSection title="Upload your syllabus (PDF)">

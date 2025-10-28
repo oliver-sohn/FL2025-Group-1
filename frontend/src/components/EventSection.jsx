@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import CardSection from './CardSection';
+import EventShape from './propTypes';
 
 // map Google Calendar colorId
 const colorFromId = (id) => {
@@ -20,7 +21,7 @@ const colorFromId = (id) => {
   return map?.[String(id)] || '#10b981';
 };
 
-// date formating
+// date formatting helpers
 const toDate = (val) => (val instanceof Date ? val : new Date(val));
 const sameDay = (a, b) =>
   a.getFullYear() === b.getFullYear() &&
@@ -46,20 +47,49 @@ function formatRange(start, end) {
   return `${fmtDate.format(s)}, ${fmtTime.format(s)} → ${fmtDate.format(e)}, ${fmtTime.format(e)}`;
 }
 
-// event display section
-function EventsSection({ events, loading, onRefresh }) {
-  const list = Array.isArray(events) ? events : [];
+function EventsSection({
+  events,
+  loading,
+  onRefresh,
+  onAddClick,
+  onEdit,
+  onDelete,
+}) {
+  const list = React.useMemo(
+    () => (Array.isArray(events) ? events : []),
+    [events],
+  );
   const isEmpty = list.length === 0;
+
+  const safeTime = (v) => {
+    const t = v instanceof Date ? v.getTime() : new Date(v).getTime();
+    return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+  };
+  const sortedList = React.useMemo(
+    () => [...list].sort((a, b) => safeTime(a.start) - safeTime(b.start)),
+    [list],
+  );
 
   return (
     <CardSection
       title="Events"
       action={
-        onRefresh ? (
-          <button type="button" className="btn btn-ghost" onClick={onRefresh}>
-            Refresh
+        <div style={{ display: 'flex', gap: 8 }}>
+          {onRefresh && (
+            <button type="button" className="btn btn-ghost" onClick={onRefresh}>
+              Refresh
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary"
+            aria-label="Add Event"
+            title="Add Event"
+            onClick={() => onAddClick?.('event')}
+          >
+            ＋
           </button>
-        ) : null
+        </div>
       }
     >
       {loading && (
@@ -71,13 +101,13 @@ function EventsSection({ events, loading, onRefresh }) {
 
       {!loading && isEmpty && (
         <p className="empty-state">
-          No events yet. Upload your syllabus to get started
+          No events yet. Upload your syllabus or add one manually!
         </p>
       )}
 
       {!loading && !isEmpty && (
         <ul className="list event-list">
-          {list.map((ev) => {
+          {sortedList.map((ev) => {
             const accent = colorFromId(ev?.colorId);
             return (
               <li
@@ -101,9 +131,9 @@ function EventsSection({ events, loading, onRefresh }) {
                     {ev.location ? (
                       <span className="event-loc">@ {ev.location}</span>
                     ) : null}
-                    {ev.eventType ? (
+                    {/* {ev.eventType ? (
                       <span className="badge">{ev.eventType}</span>
-                    ) : null}
+                    ) : null} */}
                   </div>
 
                   {ev.description ? (
@@ -111,6 +141,28 @@ function EventsSection({ events, loading, onRefresh }) {
                       {ev.description}
                     </p>
                   ) : null}
+                </div>
+
+                {/* NEW: per-row actions */}
+                <div className="item-actions">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => onEdit?.(ev)}
+                    aria-label={`Edit ${ev.summary}`}
+                    title="Edit"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => onDelete?.(ev.id)}
+                    aria-label={`Delete ${ev.summary}`}
+                    title="Delete"
+                  >
+                    Delete
+                  </button>
                 </div>
               </li>
             );
@@ -121,34 +173,22 @@ function EventsSection({ events, loading, onRefresh }) {
   );
 }
 
-const EventShape = PropTypes.shape({
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  user_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  google_event_id: PropTypes.string,
-  summary: PropTypes.string.isRequired,
-  description: PropTypes.string,
-  location: PropTypes.string,
-  colorId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  eventType: PropTypes.string.isRequired,
-  start: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)])
-    .isRequired,
-  end: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)])
-    .isRequired,
-  recurrence: PropTypes.string,
-  course_name: PropTypes.string,
-});
-
 EventsSection.propTypes = {
-  events: PropTypes.arrayOf(EventShape), // may be undefined on first render
+  events: PropTypes.arrayOf(EventShape),
   loading: PropTypes.bool,
   onRefresh: PropTypes.func,
+  onAddClick: PropTypes.func,
+  onEdit: PropTypes.func, // NEW
+  onDelete: PropTypes.func, // NEW
 };
 
-// keep eslint happy and provide sane defaults
 EventsSection.defaultProps = {
   events: [],
   loading: false,
   onRefresh: null,
+  onAddClick: null,
+  onEdit: null,
+  onDelete: null,
 };
 
 export default EventsSection;

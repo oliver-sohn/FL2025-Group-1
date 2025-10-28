@@ -1,310 +1,275 @@
 import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import CardSection from './CardSection';
 
-function toISOInTZ(dateStr, timeStr) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const [hh = 0, mm = 0] = (timeStr || '00:00').split(':').map(Number);
-  const local = new Date(y, m - 1, d, hh, mm, 0, 0);
-  return local.toISOString();
+// ---- helpers copied to keep the payload consistent with /events ----
+function pickDateLike(v) {
+  if (!v) return null;
+  if (typeof v === 'object') {
+    if (v.dateTime) return v.dateTime;
+    if (v.date) return `${v.date}T00:00:00`;
+  }
+  return v;
 }
 
-function ManualAddSection({ onAdd }) {
-  const defaultTZ = useMemo(() => {
-    try {
-      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-    } catch {
-      return 'UTC';
-    }
-  }, []);
-
-  const [form, setForm] = useState({
-    // basic
-    summary: '',
-    description: '',
-    location: '',
-    eventType: '', // e.g., "Exam", "Lecture", "Assignment Due"
-    // future idea; showing but disabled so schema parity is clear
-    colorId: '',
-    // timing (start)
-    startDate: '',
-    startTime: '',
-    // timing (end)
-    endDate: '',
-    endTime: '',
-    timeZone: defaultTZ,
-    // recurrence (optional, e.g., "RRULE:FREQ=WEEKLY;BYDAY=MO")
-    recurrence: '',
-    course_name: '',
-  });
-
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const handleChange = (key) => (e) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (!form.summary || !form.startDate) return;
-
-    const hasStartTime = Boolean(form.startTime);
-    const hasEndInputs = Boolean(form.endDate || form.endTime);
-
-    // Build start
-    const start = hasStartTime
-      ? {
-          dateTime: toISOInTZ(form.startDate, form.startTime),
-          timeZone: form.timeZone,
-        }
-      : {
-          date: form.startDate, // all-day
-          timeZone: form.timeZone,
-        };
-
-    // Build end:
-    // - if user provided end date/time, respect it
-    // - else if startTime provided but no end → default +1 hour
-    // - else (all-day) → same date
-    let end;
-    if (hasEndInputs) {
-      const endDate = form.endDate || form.startDate;
-      if (form.endTime) {
-        end = {
-          dateTime: toISOInTZ(endDate, form.endTime),
-          timeZone: form.timeZone,
-        };
-      } else if (hasStartTime) {
-        // No endTime but timed start → +1 hour default
-        const iso = toISOInTZ(endDate, form.startTime);
-        const plus1h = new Date(iso);
-        plus1h.setHours(plus1h.getHours() + 1);
-        end = { dateTime: plus1h.toISOString(), timeZone: form.timeZone };
-      } else {
-        // all-day with end date but no time
-        end = { date: endDate, timeZone: form.timeZone };
-      }
-    } else if (hasStartTime) {
-      // default timed duration 1h
-      const startISO = toISOInTZ(form.startDate, form.startTime);
-      const plus1h = new Date(startISO);
-      plus1h.setHours(plus1h.getHours() + 1);
-      end = { dateTime: plus1h.toISOString(), timeZone: form.timeZone };
-    } else {
-      // all-day same date
-      end = { date: form.startDate, timeZone: form.timeZone };
-    }
-
-    const payload = {
-      // Basic Event Info
-      summary: form.summary.trim(),
-      description: form.description.trim() || undefined,
-      location: form.location.trim() || undefined,
-      colorId: form.colorId || undefined, // currently unused; fine to omit
-      eventType: form.eventType.trim() || undefined,
-
-      // Time
-      start,
-      end,
-
-      // Recurrence
-      recurrence: form.recurrence.trim() ? [form.recurrence.trim()] : undefined,
-
-      course_name: form.course_name.trim() || undefined,
-
-      // Not collecting these in manual flow right now:
-      // recurringEventId: undefined,
-      // originalStartTime: undefined,
-    };
-
-    onAdd(payload);
-
-    // reset (keep timezone; it’s user preference)
-    setForm({
-      summary: '',
-      description: '',
-      location: '',
-      eventType: '',
-      colorId: '',
-      startDate: '',
-      startTime: '',
-      endDate: '',
-      endTime: '',
-      timeZone: form.timeZone,
-      recurrence: '',
-      course_name: '',
-    });
-  };
-
+function isAllDayStart(event, startRaw) {
+  if (event?.start && typeof event.start === 'object' && event.start.date)
+    return true;
   return (
-    <CardSection title="Manual upload">
-      <form className="manual-form" onSubmit={handleSubmit}>
-        {/* Row 1 — Title + Type */}
-        <div className="row">
-          <label className="field grow" htmlFor="summary-field">
-            <span>Title</span>
-            <input
-              id="summary-field"
-              type="text"
-              value={form.summary}
-              onChange={handleChange('summary')}
-              placeholder="Exam 1 / HW 2 / Guest lecture…"
-              required
-            />
-          </label>
-        </div>
-
-        {/* Row 2 — Event Details */}
-        <div className="row">
-          <label className="field grow" htmlFor="event-type-field">
-            <span>Event type</span>
-            <input
-              id="event-type-field"
-              type="text"
-              value={form.eventType}
-              onChange={handleChange('eventType')}
-              placeholder="Exam / Lecture / Assignment / Other"
-              required
-            />
-          </label>
-
-          <label className="field grow" htmlFor="course-name-field">
-            <span>Course Name</span>
-            <input
-              id="course-name-field"
-              type="text"
-              value={form.course_name}
-              onChange={handleChange('course_name')}
-              placeholder="CSE437, Intro to Psych, etc."
-              required
-            />
-          </label>
-
-          <label className="field grow" htmlFor="location-field">
-            <span>Location (optional)</span>
-            <input
-              id="location-field"
-              type="text"
-              value={form.location}
-              onChange={handleChange('location')}
-              placeholder="Jubel Hall 101 / Zoom…"
-            />
-          </label>
-        </div>
-
-        {/* Row 3 -- Date/Time */}
-        <div className="row">
-          <label className="field grow" htmlFor="start-date-field">
-            <span>Start date</span>
-            <input
-              id="start-date-field"
-              type="date"
-              value={form.startDate}
-              onChange={handleChange('startDate')}
-              required
-            />
-          </label>
-
-          <label className="field grow" htmlFor="start-time-field">
-            <span>Start time (optional)</span>
-            <input
-              id="start-time-field"
-              type="time"
-              value={form.startTime}
-              onChange={handleChange('startTime')}
-            />
-          </label>
-
-          <label className="field grow" htmlFor="end-date-field">
-            <span>End date (optional)</span>
-            <input
-              id="end-date-field"
-              type="date"
-              value={form.endDate}
-              onChange={handleChange('endDate')}
-            />
-          </label>
-
-          <label className="field grow" htmlFor="end-time-field">
-            <span>End time (optional)</span>
-            <input
-              id="end-time-field"
-              type="time"
-              value={form.endTime}
-              onChange={handleChange('endTime')}
-            />
-          </label>
-
-          <label className="field grow" htmlFor="tz-field">
-            <span>Time zone</span>
-            <input
-              id="tz-field"
-              type="text"
-              value={form.timeZone}
-              onChange={handleChange('timeZone')}
-              placeholder="America/Chicago"
-            />
-          </label>
-        </div>
-
-        {/* Row 4 — Advanced toggle */}
-        <div className="row">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => setShowAdvanced((v) => !v)}
-          >
-            {showAdvanced ? 'Hide advanced' : 'Show advanced'}
-          </button>
-        </div>
-
-        {showAdvanced && (
-          <>
-            {/* Row 5 — Description */}
-            <div className="row">
-              <label className="field grow" htmlFor="desc-field">
-                <span>Description (optional)</span>
-                <textarea
-                  id="desc-field"
-                  rows={3}
-                  value={form.description}
-                  onChange={handleChange('description')}
-                  placeholder="Notes, agenda, prep links…"
-                />
-              </label>
-            </div>
-
-            {/* Row 6 — Recurrence / Color */}
-            <div className="row">
-              <label className="field" htmlFor="color-field">
-                <span>Color ID (future)</span>
-                <input
-                  id="color-field"
-                  type="text"
-                  value={form.colorId}
-                  onChange={handleChange('colorId')}
-                  placeholder="e.g., 5"
-                  disabled
-                  title="Reserved for future; managed by system"
-                />
-              </label>
-            </div>
-          </>
-        )}
-
-        {/* Actions */}
-        <div className="row actions-right">
-          <button className="btn" type="submit">
-            Add
-          </button>
-        </div>
-      </form>
-    </CardSection>
+    typeof startRaw === 'string' && /^\d{4}-\d{2}-\d{2}(?!T)/.test(startRaw)
   );
 }
 
-ManualAddSection.propTypes = {
-  onAdd: PropTypes.func.isRequired, // (eventPayload) => void
+function toRecurrenceString(v) {
+  if (!v) return '';
+  if (Array.isArray(v)) return v.join('\n');
+  return String(v);
+}
+
+function normalizeForApi(event, userId) {
+  const startRaw = pickDateLike(event.start || event.start_time);
+  let endRaw = pickDateLike(event.end || event.end_time);
+
+  if (!endRaw && startRaw) {
+    const startDate = new Date(startRaw);
+    if (!Number.isNaN(startDate.getTime())) {
+      if (isAllDayStart(event, startRaw)) {
+        endRaw = startRaw;
+      } else {
+        const e = new Date(startDate);
+        e.setHours(e.getHours() + 1);
+        endRaw = e.toISOString();
+      }
+    }
+  }
+
+  return {
+    summary: event?.summary || event?.title || 'Untitled',
+    description: event?.description ?? '',
+    location: event?.location ?? '',
+    colorId: event?.colorId ?? '1',
+    eventType: event?.eventType || 'Event',
+    start: startRaw,
+    end: endRaw || startRaw,
+    recurrence: toRecurrenceString(event?.recurrence),
+    course_name: event?.course_name ?? '',
+    user_id: userId,
+    google_event_id: event?.google_event_id ?? null,
+  };
+}
+// -------------------------------------------------------------------
+
+function ManualAddModal({ open, defaultType, userId, onClose, onAdded }) {
+  const [form, setForm] = useState({
+    summary: '',
+    date: '',
+    time: '',
+    location: '',
+    description: '',
+    eventType: defaultType || 'event',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState('');
+
+  // keep type in sync when a different "+" opens the modal
+  useMemo(() => {
+    setForm((f) => ({ ...f, eventType: defaultType || 'event' }));
+  }, [defaultType]);
+
+  const buildEventPayload = () => {
+    // build Google-ish {start,end} from date+time
+    const hasTime = Boolean(form.time);
+    const start = hasTime
+      ? { dateTime: `${form.date}T${form.time}` }
+      : { date: form.date };
+    const event = {
+      summary: form.summary.trim(),
+      description: form.description.trim(),
+      location: form.location.trim(),
+      start,
+      end: start, // UI doesn’t collect end; backend will default +1h for timed
+      eventType: form.eventType,
+      recurrence: '',
+      course_name: '',
+      google_event_id: null,
+    };
+    return normalizeForApi(event, userId);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErr('');
+    if (!form.summary || !form.date) {
+      setErr('Please fill in at least Summary and Date.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const body = buildEventPayload();
+      const url = `${process.env.REACT_APP_BACKEND_URL}/events`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        let msg = text;
+        try {
+          const j = JSON.parse(text);
+          msg =
+            typeof j.detail === 'string'
+              ? j.detail
+              : JSON.stringify(j, null, 2);
+        } catch {
+          /* keep msg as text */
+        }
+        throw new Error(msg || `Request failed (${res.status})`);
+      }
+      const created = text ? JSON.parse(text) : null;
+      if (onAdded) onAdded(created);
+      setForm({
+        summary: '',
+        date: '',
+        time: '',
+        location: '',
+        description: '',
+        eventType: defaultType || 'event',
+      });
+      onClose();
+    } catch (e2) {
+      setErr(String(e2?.message || e2));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Add item"
+    >
+      <div className="modal-card">
+        <div className="modal-header">
+          <h3>Add {form.eventType || defaultType || 'Event'}</h3>
+          <button
+            className="btn btn-ghost"
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form className="manual-form" onSubmit={handleSubmit}>
+          <div className="row">
+            <label className="field grow" htmlFor="type">
+              <span>Summary</span>
+              <input
+                type="text"
+                value={form.summary}
+                onChange={(e) => setForm({ ...form, summary: e.target.value })}
+                placeholder="Exam 1 / HW 2 / Guest lecture…"
+                required
+              />
+            </label>
+          </div>
+
+          <div className="row">
+            <label className="field" htmlFor="date">
+              <span>Date</span>
+              <input
+                type="date"
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                required
+              />
+            </label>
+            <label className="field" htmlFor="time">
+              <span>Time (optional)</span>
+              <input
+                type="time"
+                value={form.time}
+                onChange={(e) => setForm({ ...form, time: e.target.value })}
+              />
+            </label>
+            <label className="field grow" htmlFor="location">
+              <span>Location (optional)</span>
+              <input
+                type="text"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                placeholder="Room 101 / Zoom"
+              />
+            </label>
+          </div>
+
+          <div className="row">
+            <label className="field grow" htmlFor="description">
+              <span>Description (optional)</span>
+              <textarea
+                rows={3}
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                placeholder="Any notes or details…"
+              />
+            </label>
+          </div>
+
+          <div className="row actions-right">
+            <button className="btn" type="submit" disabled={submitting}>
+              {submitting ? 'Adding…' : 'Add'}
+            </button>
+          </div>
+
+          {err && (
+            <p className="error" role="alert">
+              {err}
+            </p>
+          )}
+        </form>
+      </div>
+
+      {/* super light styles; add to your CSS file if you prefer */}
+      <style>{`
+        .modal-backdrop {
+          position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+          display:flex; align-items:center; justify-content:center; z-index:999;
+        }
+        .modal-card {
+          background: #fff; border-radius: 16px; padding: 16px; width: min(720px, 92vw);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
+        .manual-form .row { display:flex; gap: 12px; align-items:flex-start; margin: 10px 0; }
+        .manual-form .field { display:flex; flex-direction:column; gap:6px; min-width: 160px; }
+        .manual-form .field.grow { flex: 1; }
+        .row.actions-right { display:flex; justify-content:flex-end; }
+      `}</style>
+    </div>
+  );
+}
+
+ManualAddModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  defaultType: PropTypes.string,
+  userId: PropTypes.number.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onAdded: PropTypes.func, // (createdEvent) => void
 };
 
-export default ManualAddSection;
+ManualAddModal.defaultProps = {
+  defaultType: 'event',
+  onAdded: undefined,
+};
+
+export default ManualAddModal;

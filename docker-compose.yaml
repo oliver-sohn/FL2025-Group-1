@@ -10,7 +10,7 @@ services:
       - "5432:5432"
 
   backend:
-    build: 
+    build:
       context: ./backend
       dockerfile: ./Dockerfile
     container_name: syllabus_scanner_backend
@@ -23,7 +23,7 @@ services:
       - db
 
   frontend:
-    build: 
+    build:
       context: ./frontend
       dockerfile: ./Dockerfile
     container_name: syllabus_scanner_frontend
@@ -35,4 +35,3 @@ services:
     depends_on:
       - db
       - backend
-
