@@ -9,6 +9,7 @@ from database.db import Base, engine
 from routers.auth import router as auth_router
 from routers.events import router as event_router
 from routers.parser import router as parser_router
+from routers.gcal import router as gcal_router
 
 load_dotenv()
 
@@ -42,3 +43,4 @@ app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 app.include_router(auth_router)
 app.include_router(event_router)
 app.include_router(parser_router, prefix="/parser")
+app.include_router(gcal_router)
