@@ -1,10 +1,9 @@
 from typing import List, Optional
 
 from fastapi import HTTPException
+from routers.schemas import EventCreate, EventSchema
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-from routers.schemas import EventCreate, EventSchema
 
 from .models import Event as EventModel
 
@@ -46,7 +45,7 @@ def update_event(db: Session, event_id: int, updated_event: EventCreate) -> Even
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    for field, value in updated_event.items():
+    for field, value in updated_event:
         if value is not None:
             setattr(db_event, field, value)
 

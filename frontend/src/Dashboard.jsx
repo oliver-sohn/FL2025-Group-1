@@ -1,5 +1,6 @@
 // frontend/my-app/src/Dashboard.jsx
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { Home } from 'lucide-react';
 import PropTypes from 'prop-types';
 import NavBar from './NavBar';
 import EventsSection from './components/EventSection';
@@ -489,16 +490,7 @@ function Dashboard({ user, onLogout }) {
       <NavBar user={user} onLogout={onLogout} />
       <main className="dashboard-main">
         <h2 className="page-title">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="23"
-            height="23"
-            fill="currentColor"
-            className="bi bi-house"
-            viewBox="0 0 16 16"
-          >
-            <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z" />
-          </svg>{' '}
+          <Home size={24} />
           Dashboard
         </h2>
         <h3 className="page-subtitle">
@@ -506,34 +498,32 @@ function Dashboard({ user, onLogout }) {
         </h3>
 
         <div className="cards-grid">
-          <div className="cards-grid">
-            <EventsSection
-              loading={loading}
-              events={grouped.events}
-              onRefresh={fetchEvents}
-              onAddClick={() => openAddFor('event')}
-              onEdit={openEditFor} // NEW
-              onDelete={(id) => handleRowDelete(id)} // NEW
-            />
+          <EventsSection
+            loading={loading}
+            events={grouped.events}
+            onRefresh={fetchEvents}
+            onAddClick={() => openAddFor('event')}
+            onEdit={openEditFor} // NEW
+            onDelete={(id) => handleRowDelete(id)} // NEW
+          />
 
-            <AssignmentsSection
-              loading={loading}
-              items={grouped.assignments}
-              onRefresh={fetchEvents}
-              onAddClick={() => openAddFor('assignment')}
-              onEdit={openEditFor} // NEW
-              onDelete={(id) => handleRowDelete(id)} // NEW
-            />
+          <AssignmentsSection
+            loading={loading}
+            items={grouped.assignments}
+            onRefresh={fetchEvents}
+            onAddClick={() => openAddFor('assignment')}
+            onEdit={openEditFor} // NEW
+            onDelete={(id) => handleRowDelete(id)} // NEW
+          />
 
-            <ExamsSection
-              loading={loading}
-              items={grouped.exams}
-              onRefresh={fetchEvents}
-              onAddClick={() => openAddFor('exam')}
-              onEdit={openEditFor} // NEW
-              onDelete={(id) => handleRowDelete(id)} // NEW
-            />
-          </div>
+          <ExamsSection
+            loading={loading}
+            items={grouped.exams}
+            onRefresh={fetchEvents}
+            onAddClick={() => openAddFor('exam')}
+            onEdit={openEditFor} // NEW
+            onDelete={(id) => handleRowDelete(id)} // NEW
+          />
         </div>
 
         {error && (

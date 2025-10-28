@@ -116,9 +116,9 @@ function AssignmentsSection({
                     {ev.location ? (
                       <span className="event-loc">@ {ev.location}</span>
                     ) : null}
-                    {ev.eventType ? (
+                    {/* {ev.eventType ? (
                       <span className="badge">{ev.eventType}</span>
-                    ) : null}
+                    ) : null} */}
                   </div>
 
                   {ev.description ? (

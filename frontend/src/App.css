@@ -214,11 +214,6 @@
   .cards-grid {
     grid-template-columns: 1fr 1fr;
   }
-}
-@media (min-width: 1200px) {
-  .cards-grid {
-    grid-template-columns: 1fr 1fr;
-  }
   .cards-grid .card:nth-child(3) {
     grid-column: 1 / -1;
   } /* Exams full width */
