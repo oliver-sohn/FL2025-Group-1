@@ -322,7 +322,7 @@ function SyllabusScanner({ user, onLogout }) {
                 onClick={handleAddToSiteAndGCal}
                 type="button"
               >
-                Add to site & export to GCal
+                Add to site & export to Google Calendar
               </button>
             </div>
           </>
