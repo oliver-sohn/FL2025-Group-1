@@ -42,6 +42,7 @@ const findGaps = (dayStart, dayEnd, events, bufferBefore, bufferAfter) => {
   return gaps;
 };
 
+// Study block generation logic
 const generateStudyBlocks = (events, weekStart, preferences) => {
   const blocks = [];
 
@@ -171,6 +172,8 @@ function StudyPlanner({ user, onLogout }) {
     bufferAfter: 15,
   });
 
+  const [tempPreferences, setTempPreferences] = useState({ ...preferences });
+
   const loadCalendar = useCallback(async () => {
     try {
       const weekEnd = new Date(currentWeekStart);
@@ -195,8 +198,10 @@ function StudyPlanner({ user, onLogout }) {
   }, [loadCalendar]);
 
   useEffect(() => {
-    const blocks = generateStudyBlocks(events, currentWeekStart, preferences);
-    setStudyBlocks(blocks);
+    if (events.length > 0) {
+      const blocks = generateStudyBlocks(events, currentWeekStart, preferences);
+      setStudyBlocks(blocks);
+    }
   }, [events, preferences, currentWeekStart]);
 
   const handleBlockClick = (block) => {
@@ -227,6 +232,75 @@ function StudyPlanner({ user, onLogout }) {
 
   const handleCancelAddBlock = () => {
     setSelectedBlock(null);
+  };
+
+  const handleOpenPreferences = () => {
+    setTempPreferences({ ...preferences });
+    setShowPreferences(true);
+  };
+
+  const handleCancelPreferences = () => {
+    setTempPreferences({ ...preferences });
+    setShowPreferences(false);
+  };
+
+  const validatePreferences = (prefs) => {
+    const errors = [];
+
+    // Validate at least one day is selected
+    if (prefs.preferredDays.length === 0) {
+      errors.push('Please select at least one preferred day');
+    }
+
+    // Validate time range
+    const [startHour, startMin] = prefs.preferredStartTime
+      .split(':')
+      .map(Number);
+    const [endHour, endMin] = prefs.preferredEndTime.split(':').map(Number);
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+
+    if (startMinutes >= endMinutes) {
+      errors.push('End time must be after start time');
+    }
+
+    // Validate block duration
+    if (prefs.minBlockDuration < 15) {
+      errors.push('Minimum block duration must be at least 15 minutes');
+    }
+
+    if (prefs.maxBlockDuration > 480) {
+      errors.push('Maximum block duration cannot exceed 480 minutes (8 hours)');
+    }
+
+    if (prefs.minBlockDuration > prefs.maxBlockDuration) {
+      errors.push(
+        'Minimum duration must be less than or equal to maximum duration',
+      );
+    }
+
+    // Validate buffer times
+    if (prefs.bufferBefore < 0 || prefs.bufferBefore > 60) {
+      errors.push('Buffer before must be between 0 and 60 minutes');
+    }
+
+    if (prefs.bufferAfter < 0 || prefs.bufferAfter > 60) {
+      errors.push('Buffer after must be between 0 and 60 minutes');
+    }
+
+    return errors;
+  };
+
+  const handleSavePreferences = () => {
+    const errors = validatePreferences(tempPreferences);
+
+    if (errors.length > 0) {
+      alert(`Please fix the following errors:\n\n${errors.join('\n')}`);
+      return;
+    }
+
+    setPreferences({ ...tempPreferences });
+    setShowPreferences(false);
   };
 
   const regenerateBlocks = () => {
@@ -331,7 +405,7 @@ function StudyPlanner({ user, onLogout }) {
 
               <button
                 type="button"
-                onClick={() => setShowPreferences(!showPreferences)}
+                onClick={handleOpenPreferences}
                 className="btn btn-primary study-planner-btn-icon"
               >
                 <Settings size={14} />
@@ -369,13 +443,6 @@ function StudyPlanner({ user, onLogout }) {
           <div className="card preferences-card">
             <div className="card-header">
               <h3>Study Preferences</h3>
-              <button
-                type="button"
-                onClick={() => setShowPreferences(false)}
-                className="btn btn-ghost"
-              >
-                Close
-              </button>
             </div>
             <div className="card-body">
               <div className="preferences-grid">
@@ -387,20 +454,19 @@ function StudyPlanner({ user, onLogout }) {
                         type="button"
                         key={day}
                         onClick={() => {
-                          const newDays = preferences.preferredDays.includes(
-                            index,
-                          )
-                            ? preferences.preferredDays.filter(
-                                (d) => d !== index,
-                              )
-                            : [...preferences.preferredDays, index];
-                          setPreferences({
-                            ...preferences,
+                          const newDays =
+                            tempPreferences.preferredDays.includes(index)
+                              ? tempPreferences.preferredDays.filter(
+                                  (d) => d !== index,
+                                )
+                              : [...tempPreferences.preferredDays, index];
+                          setTempPreferences({
+                            ...tempPreferences,
                             preferredDays: newDays,
                           });
                         }}
                         className={`btn preferences-day-btn ${
-                          preferences.preferredDays.includes(index)
+                          tempPreferences.preferredDays.includes(index)
                             ? 'preferences-day-btn-active'
                             : ''
                         }`}
@@ -418,10 +484,10 @@ function StudyPlanner({ user, onLogout }) {
                       <span className="sr-only">Start Time</span>
                       <input
                         type="time"
-                        value={preferences.preferredStartTime}
+                        value={tempPreferences.preferredStartTime}
                         onChange={(e) =>
-                          setPreferences({
-                            ...preferences,
+                          setTempPreferences({
+                            ...tempPreferences,
                             preferredStartTime: e.target.value,
                           })
                         }
@@ -432,10 +498,10 @@ function StudyPlanner({ user, onLogout }) {
                       <span className="sr-only">End Time</span>
                       <input
                         type="time"
-                        value={preferences.preferredEndTime}
+                        value={tempPreferences.preferredEndTime}
                         onChange={(e) =>
-                          setPreferences({
-                            ...preferences,
+                          setTempPreferences({
+                            ...tempPreferences,
                             preferredEndTime: e.target.value,
                           })
                         }
@@ -453,15 +519,16 @@ function StudyPlanner({ user, onLogout }) {
                       <span className="sr-only">Minimum Duration</span>
                       <input
                         type="number"
-                        value={preferences.minBlockDuration}
+                        value={tempPreferences.minBlockDuration}
                         onChange={(e) =>
-                          setPreferences({
-                            ...preferences,
+                          setTempPreferences({
+                            ...tempPreferences,
                             minBlockDuration: parseInt(e.target.value, 10),
                           })
                         }
                         className="preferences-duration-input"
                         min="15"
+                        max="480"
                         step="15"
                       />
                     </label>
@@ -470,18 +537,22 @@ function StudyPlanner({ user, onLogout }) {
                       <span className="sr-only">Maximum Duration</span>
                       <input
                         type="number"
-                        value={preferences.maxBlockDuration}
+                        value={tempPreferences.maxBlockDuration}
                         onChange={(e) =>
-                          setPreferences({
-                            ...preferences,
+                          setTempPreferences({
+                            ...tempPreferences,
                             maxBlockDuration: parseInt(e.target.value, 10),
                           })
                         }
                         className="preferences-duration-input"
                         min="15"
+                        max="480"
                         step="15"
                       />
                     </label>
+                  </div>
+                  <div className="hint">
+                    Min: 15 min, Max: 480 min (8 hours)
                   </div>
                 </div>
 
@@ -495,15 +566,16 @@ function StudyPlanner({ user, onLogout }) {
                       <span className="sr-only">Buffer Before</span>
                       <input
                         type="number"
-                        value={preferences.bufferBefore}
+                        value={tempPreferences.bufferBefore}
                         onChange={(e) =>
-                          setPreferences({
-                            ...preferences,
+                          setTempPreferences({
+                            ...tempPreferences,
                             bufferBefore: parseInt(e.target.value, 10),
                           })
                         }
                         className="preferences-buffer-input"
                         min="0"
+                        max="60"
                         step="5"
                       />
                     </label>
@@ -512,20 +584,40 @@ function StudyPlanner({ user, onLogout }) {
                       <span className="sr-only">Buffer After</span>
                       <input
                         type="number"
-                        value={preferences.bufferAfter}
+                        value={tempPreferences.bufferAfter}
                         onChange={(e) =>
-                          setPreferences({
-                            ...preferences,
+                          setTempPreferences({
+                            ...tempPreferences,
                             bufferAfter: parseInt(e.target.value, 10),
                           })
                         }
                         className="preferences-buffer-input"
                         min="0"
+                        max="60"
                         step="5"
                       />
                     </label>
                   </div>
+                  <div className="hint">Max: 60 minutes each</div>
                 </div>
+              </div>
+
+              <div className="preferences-actions">
+                <button
+                  type="button"
+                  onClick={handleCancelPreferences}
+                  className="btn btn-ghost"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSavePreferences}
+                  className="btn btn-primary"
+                >
+                  <Check size={14} />
+                  Save Preferences
+                </button>
               </div>
             </div>
           </div>

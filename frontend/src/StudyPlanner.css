@@ -119,6 +119,16 @@
   width: 70px;
 }
 
+/* Preferences Actions */
+.preferences-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #9ae6b4;
+}
+
 /* Calendar Grid */
 .calendar-header {
   border-bottom: 1px dashed #9ae6b4;

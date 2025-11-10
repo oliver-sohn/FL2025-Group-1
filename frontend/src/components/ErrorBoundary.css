@@ -1,0 +1,156 @@
+/* =========================
+   Error Boundary Styles
+   ========================= */
+
+/* Error-specific header styling */
+.error-header {
+  background: #fecaca !important; /* light red instead of mint */
+  border-bottom: 1px dashed #f87171 !important;
+}
+.error-header h3 {
+  color: #7f1d1d !important; /* dark red */
+  display: flex;
+  align-items: center;
+}
+
+/* Error modal specific sizing */
+.error-modal {
+  max-width: 720px;
+  width: 100%;
+}
+
+/* Error body content */
+.error-body {
+  padding: 1rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.error-message {
+  margin: 0 0 1rem 0;
+  color: #065f46;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Error details box */
+.error-details-box {
+  background: #fef2f2; /* light red background */
+  border: 1px dashed #f87171;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.error-details-label {
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+  color: #7f1d1d;
+  font-size: 0.95rem;
+}
+
+.error-details-text {
+  margin: 0;
+  color: #991b1b;
+  font-family: Monaco, Consolas, 'Courier New', monospace;
+  font-size: 0.9rem;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+/* Stack trace section */
+.error-stack-section {
+  background: #ecfdf5; /* light mint */
+  border: 1px dashed #9ae6b4;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.stack-toggle-btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0.65rem 1rem;
+  text-align: left;
+  font-family: Monaco, Consolas, 'Courier New', monospace;
+  font-weight: 700;
+  color: #065f46;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.15s ease;
+}
+
+.stack-toggle-btn:hover {
+  background: #d1fae5;
+}
+
+.stack-toggle-btn:active {
+  transform: translateY(1px);
+}
+
+.stack-toggle-btn:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: -2px;
+}
+
+.stack-toggle-icon {
+  display: inline-block;
+  width: 12px;
+  font-size: 0.75rem;
+  color: #047857;
+}
+
+.error-stack {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border-top: 1px dashed #9ae6b4;
+  font-family: Monaco, Consolas, 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: #065f46;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  line-height: 1.4;
+}
+
+/* Error footer with action buttons */
+.error-footer {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  padding: 1rem;
+  border-top: 1px dashed #9ae6b4;
+  background: #ecfdf5;
+  margin: 0 -0.9rem -1rem;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Small screen adjustments */
+@media (max-width: 420px) {
+  .error-modal {
+    max-width: 100%;
+  }
+
+  .error-body {
+    max-height: 50vh;
+  }
+
+  .error-footer {
+    flex-direction: column;
+  }
+
+  .error-footer .btn {
+    width: 100%;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .stack-toggle-btn:active {
+    transform: none;
+  }
+}
