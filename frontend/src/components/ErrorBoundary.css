@@ -134,15 +134,15 @@
   .error-modal {
     max-width: 100%;
   }
-  
+
   .error-body {
     max-height: 50vh;
   }
-  
+
   .error-footer {
     flex-direction: column;
   }
-  
+
   .error-footer .btn {
     width: 100%;
   }
