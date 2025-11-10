@@ -39,9 +39,7 @@ const findGaps = (dayStart, dayEnd, events, bufferBefore, bufferAfter) => {
     gaps.push([currentTime, dayEnd]);
   }
 
-  throw new Error('Intentional Error for Testing Error Boundary');
-
-  // return gaps;
+  return gaps;
 };
 
 // Study block generation logic
