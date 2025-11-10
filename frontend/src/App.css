@@ -230,6 +230,17 @@
   align-items: center;
   gap: 0.5rem; /* tweak size as you like */
 }
+.event-past {
+  font-style: italic;
+  background: #ecfdf5;
+  border: 1px dashed #9ae6b4;
+  border-radius: 8px;
+  padding: 0 0.3rem;
+  margin-left: 0.4rem;
+  font-size: 0.85rem;
+  color: #065f46;
+}
+
 
 /* Row layout: content + actions */
 .event-row {
@@ -250,6 +261,35 @@
   display: inline-flex;
   gap: 0.4rem;
   align-self: center; /* vertically centers relative to row */
+}
+/* Assignments: done state */
+.assignment-row {
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.assignment-row-done {
+  background: #ecfdf5; /* light mint, same family as app background */
+  opacity: 0.8;
+}
+
+.assignment-row-done .event-title,
+.assignment-row-done .event-date,
+.assignment-row-done .event-loc,
+.assignment-row-done .event-desc {
+  text-decoration: line-through;
+}
+
+/* Done button style */
+.btn-done {
+  border-color: #10b981;
+  background: #d1fae5; /* pale mint */
+  color: #047857;
+}
+
+.btn-done:hover {
+  background: #bbf7d0;
 }
 
 /* Small button variant */

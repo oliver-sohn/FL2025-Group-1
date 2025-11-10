@@ -106,6 +106,9 @@ function ExamsSection({
                       <span className="chip">{ev.course_name}:</span>
                     )}
                     <span className="event-title">{ev.summary}</span>
+                    {new Date(ev.end) < new Date() && (
+                      <span className="event-past">Past</span>
+                    )}
                   </div>
 
                   <div className="event-sub">
