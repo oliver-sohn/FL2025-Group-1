@@ -55,9 +55,29 @@ function AssignmentsSection({
   onAddClick,
   onEdit,
   onDelete,
+  onMarkDone, // optional callback for parent if you want to persist later
 }) {
   const list = Array.isArray(items) ? items : [];
   const isEmpty = !loading && list.length === 0;
+
+  // local UI state for completed assignments (by id)
+  const [doneIds, setDoneIds] = React.useState(() => new Set());
+
+  const handleToggleDone = (ev) => {
+    setDoneIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(ev.id)) {
+        next.delete(ev.id);
+      } else {
+        next.add(ev.id);
+      }
+      return next;
+    });
+
+    if (onMarkDone) {
+      onMarkDone(ev);
+    }
+  };
 
   return (
     <CardSection
@@ -94,10 +114,14 @@ function AssignmentsSection({
         <ul className="list event-list">
           {list.map((ev) => {
             const accent = colorFromId(ev?.colorId);
+            const isDone = doneIds.has(ev.id);
+
             return (
               <li
                 key={ev.id}
-                className="event-row"
+                className={`event-row assignment-row ${
+                  isDone ? 'assignment-row-done' : ''
+                }`}
                 style={{ borderLeftColor: accent }}
               >
                 <div className="event-main">
@@ -106,6 +130,9 @@ function AssignmentsSection({
                       <span className="chip">{ev.course_name}:</span>
                     )}
                     <span className="event-title">{ev.summary}</span>
+                    {new Date(ev.end) < new Date() && (
+                      <span className="event-past">Past</span>
+                    )}
                   </div>
 
                   <div className="event-sub">
@@ -116,9 +143,6 @@ function AssignmentsSection({
                     {ev.location ? (
                       <span className="event-loc">@ {ev.location}</span>
                     ) : null}
-                    {/* {ev.eventType ? (
-                      <span className="badge">{ev.eventType}</span>
-                    ) : null} */}
                   </div>
 
                   {ev.description ? (
@@ -129,6 +153,19 @@ function AssignmentsSection({
                 </div>
 
                 <div className="item-actions">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-done"
+                    onClick={() => handleToggleDone(ev)}
+                    aria-label={
+                      isDone
+                        ? `Mark ${ev.summary} as not done`
+                        : `Mark ${ev.summary} as done`
+                    }
+                    title={isDone ? 'Undo Done' : 'Mark as Done'}
+                  >
+                    {isDone ? 'Undo' : 'Done'}
+                  </button>
                   <button
                     type="button"
                     className="btn btn-sm"
@@ -162,8 +199,9 @@ AssignmentsSection.propTypes = {
   loading: PropTypes.bool,
   onRefresh: PropTypes.func,
   onAddClick: PropTypes.func,
-  onEdit: PropTypes.func, // NEW
-  onDelete: PropTypes.func, // NEW
+  onEdit: PropTypes.func,
+  onDelete: PropTypes.func,
+  onMarkDone: PropTypes.func, // optional
 };
 
 AssignmentsSection.defaultProps = {
@@ -173,6 +211,7 @@ AssignmentsSection.defaultProps = {
   onAddClick: undefined,
   onEdit: null,
   onDelete: null,
+  onMarkDone: null,
 };
 
 export default AssignmentsSection;
