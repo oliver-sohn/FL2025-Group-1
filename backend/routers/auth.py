@@ -5,17 +5,12 @@ import time
 import jwt
 import requests
 from authlib.integrations.starlette_client import OAuth
+from database.db import get_db
+from database.users import select_user_by_google_id, select_user_by_id, upsert_user_sync
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-
-from database.db import get_db
-from database.users import (
-    select_user_by_google_id,
-    select_user_by_id,
-    upsert_user_sync,
-)
 
 load_dotenv()
 
@@ -44,7 +39,7 @@ oauth.register(
 
 @router.get("/login")
 async def login(request: Request):
-    redirect_uri = request.url_for("auth_callback")
+    redirect_uri = f"{str(request.base_url).rstrip('/')}/api/auth/callback" if os.getenv("IS_KUBERNETES") else request.url_for("auth_callback")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 

@@ -1,11 +1,11 @@
 services:
   db:
     image: docker.io/postgres:latest
-    container_name: syllabus_scanner_db
+    container_name: db
     environment:
       POSTGRES_USER: oliver
       POSTGRES_PASSWORD: 123456
-      POSTGRES_DB: syllabus_scanner_db
+      POSTGRES_DB: db
     ports:
       - "5432:5432"
 
