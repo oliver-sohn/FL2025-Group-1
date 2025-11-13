@@ -1,15 +1,14 @@
 import os
 
+from database.db import Base, engine
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.sessions import SessionMiddleware
-
-from database.db import Base, engine
 from routers.auth import router as auth_router
 from routers.events import router as event_router
-from routers.parser import router as parser_router
 from routers.gcal import router as gcal_router
+from routers.parser import router as parser_router
+from starlette.middleware.sessions import SessionMiddleware
 
 load_dotenv()
 
@@ -21,7 +20,7 @@ SESSION_SECRET = os.getenv("SESSION_SECRET")
 Base.metadata.create_all(bind=engine)
 
 
-app = FastAPI(title="Syllabus App")
+app = FastAPI(title="Syllabus App", redirect_slashes=False)
 
 # CORS
 origins = [
@@ -39,8 +38,7 @@ app.add_middleware(
 
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 
-
 app.include_router(auth_router)
 app.include_router(event_router)
-app.include_router(parser_router, prefix="/parser")
+app.include_router(parser_router)
 app.include_router(gcal_router)

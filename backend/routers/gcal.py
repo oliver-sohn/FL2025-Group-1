@@ -13,6 +13,7 @@ router = APIRouter(prefix="/gcal", tags=["GCal"])
 
 # Google Events Logic
 @router.post("/add-event", response_model=EventSchema)
+@router.post("/add-event/", response_model=EventSchema)
 def post_event_to_google(user_id: int, event_id: int, db: Session = Depends(get_db)):
     event = crud_events.get_event(db, event_id=event_id)
     user: User = select_user_by_id(db, user_id)
@@ -51,6 +52,7 @@ def post_event_to_google(user_id: int, event_id: int, db: Session = Depends(get_
 
 
 @router.get("/events")
+@router.get("/events/")
 def get_calendar_events(
     user_id: int, start_date: str, end_date: str, db: Session = Depends(get_db)
 ):
@@ -80,6 +82,7 @@ def get_calendar_events(
 
 
 @router.post("/study-block")
+@router.post("/study-block/")
 def add_study_block_to_calendar(
     user_id: int, summary: str, start: str, end: str, db: Session = Depends(get_db)
 ):
