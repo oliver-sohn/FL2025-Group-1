@@ -41,22 +41,21 @@ function toRecurrenceString(v) {
 // IMPORTANT: backend requires these fields; send them even if empty:
 // - description (string), colorId (string), recurrence (string), course_name (string), google_event_id (string)
 function normalizeForApi(event, userId) {
-  const startRaw = pickDateLike(event.start || event.start_time);
+  let startRaw = new Date(pickDateLike(event.start || event.start_time));
   let endRaw = pickDateLike(event.end || event.end_time);
 
   // Default end if missing
-  if (!endRaw && startRaw) {
-    const startDate = new Date(startRaw);
-    if (!Number.isNaN(startDate.getTime())) {
-      if (isAllDayStart(event, startRaw)) {
-        endRaw = startRaw; // all-day single-day
-      } else {
-        const e = new Date(startDate);
-        e.setHours(e.getHours() + 1);
-        endRaw = e.toISOString(); // timed default +1h
-      }
+  if (!endRaw && startRaw && !Number.isNaN(startRaw.getTime())) {
+    if (isAllDayStart(event, startRaw)) {
+      endRaw = startRaw; // all-day single-day
+    } else {
+      const e = new Date(startRaw);
+      e.setHours(e.getHours() + 1);
+      endRaw = e.toISOString(); // timed default +1h
     }
   }
+
+  startRaw = startRaw.toISOString();
 
   return {
     summary: event?.summary || event?.title || 'Untitled',

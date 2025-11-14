@@ -38,24 +38,19 @@ const toRecurrenceString = (v) => {
   return String(v);
 };
 
-const isAllDayString = (start) =>
-  typeof start === 'string' && /^\d{4}-\d{2}-\d{2}T00:00:00$/.test(start);
-
 const normalizeManualFormToApi = (
   { title, date, time, location, description, eventType },
   userId,
 ) => {
-  const start = pickDateLike(date, time);
-  let end = start;
+  let start = new Date(pickDateLike(date, time));
+  let end = new Date(start);
 
-  if (start && !isAllDayString(start)) {
-    const d = new Date(start);
-    if (!Number.isNaN(d.getTime())) {
-      const plus1h = new Date(d);
-      plus1h.setHours(plus1h.getHours() + 1);
-      end = plus1h.toISOString();
-    }
+  if (start && !Number.isNaN(start.getTime())) {
+    end.setHours(end.getHours() + 1);
   }
+
+  start = start.toISOString();
+  end = end.toISOString();
 
   return {
     summary: title || 'Untitled',
