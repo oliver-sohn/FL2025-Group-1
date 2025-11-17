@@ -7,10 +7,11 @@ from database.db import get_db
 from parser.parser_app import parser as parse_syllabus
 from routers.schemas import EventDraftSchema
 
-router = APIRouter(prefix="/parse", tags=["Parser"])
+router = APIRouter(prefix="/parser", tags=["Parser"])
 
 
-@router.post("/", response_model=List[EventDraftSchema])
+@router.post("/parse", response_model=List[EventDraftSchema])
+@router.post("/parse/", response_model=List[EventDraftSchema])
 async def parse_events_from_file(
     file: UploadFile = File(...),
     semester_start: Optional[str] = Form(None),

@@ -5,17 +5,12 @@ import time
 import jwt
 import requests
 from authlib.integrations.starlette_client import OAuth
+from database.db import get_db
+from database.users import select_user_by_google_id, select_user_by_id, upsert_user_sync
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-
-from database.db import get_db
-from database.users import (
-    select_user_by_google_id,
-    select_user_by_id,
-    upsert_user_sync,
-)
 
 load_dotenv()
 
@@ -43,12 +38,18 @@ oauth.register(
 
 
 @router.get("/login")
+@router.get("/login/")
 async def login(request: Request):
-    redirect_uri = request.url_for("auth_callback")
+    redirect_uri = (
+        f"{str(request.base_url).rstrip('/')}/api/auth/callback"
+        if os.getenv("IS_KUBERNETES")
+        else request.url_for("auth_callback")
+    )
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
 @router.get("/callback")
+@router.get("/callback/")
 async def auth_callback(request: Request, db: Session = Depends(get_db)):
     try:
         token = await oauth.google.authorize_access_token(request)
@@ -97,6 +98,7 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/verify")
+@router.post("/verify/")
 async def verify_token(request: Request, db: Session = Depends(get_db)):
     data = await request.json()
     token = data.get("token")
@@ -121,6 +123,7 @@ async def verify_token(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/session")
+@router.get("/session/")
 async def check_session(user_id: int, db: Session = Depends(get_db)):
     user = select_user_by_id(db, user_id)
     if not user:

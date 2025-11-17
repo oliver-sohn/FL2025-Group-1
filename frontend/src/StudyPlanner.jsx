@@ -137,7 +137,6 @@ const api = {
     return data;
   },
   addStudyBlock: async (userId, summary, start, end) => {
-    console.log('Adding study block:', { userId, summary, start, end });
     const url = `${process.env.REACT_APP_BACKEND_URL}/gcal/study-block?user_id=${userId}&summary=${summary}&start=${start}&end=${end}`;
     await fetch(url, {
       method: 'POST',
@@ -184,8 +183,6 @@ function StudyPlanner({ user, onLogout }) {
         currentWeekStart.toISOString(),
         weekEnd.toISOString(),
       );
-
-      console.log(calendarData);
 
       setEvents(calendarData.items || []);
     } catch (error) {
