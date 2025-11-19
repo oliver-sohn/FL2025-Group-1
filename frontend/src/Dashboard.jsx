@@ -88,7 +88,8 @@ function ManualAddModal({
   initialValues = null, // <- NEW
   mode = 'add', // 'add' | 'edit'  <- NEW
   onClose,
-  onSubmit,
+  onSubmitToSite,
+  onSubmitToGCal,
 }) {
   const [form, setForm] = React.useState({
     title: '',
@@ -157,26 +158,33 @@ function ManualAddModal({
     };
   }, [isOpen, defaultType, initialValues]);
 
-  // ESC to close
-  React.useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
+  const clearForm = () => {
+    setForm({
+      title: '',
+      date: '',
+      time: '',
+      location: '',
+      description: '',
+      eventType: defaultType || 'event',
+    });
+  };
 
-    if (isOpen && typeof window !== 'undefined') {
-      window.addEventListener('keydown', onKey);
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('keydown', onKey);
-      }
-    };
-  }, [isOpen, onClose]);
+  const handleClose = () => {
+    onClose();
+    clearForm();
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (form.title && form.date) {
-      onSubmit(form);
+      const action = e.nativeEvent.submitter?.value;
+      if (action === 'gcal' && mode === 'add') {
+        // Export to Google Calendar
+        onSubmitToGCal(form);
+      } else {
+        onSubmitToSite(form);
+      }
+      clearForm();
     }
   };
 
@@ -188,7 +196,7 @@ function ManualAddModal({
         type="button"
         className="modal-overlay"
         aria-label="Close modal"
-        onClick={onClose}
+        onClick={handleClose}
       />
       <div
         className="modal-backdrop"
@@ -207,7 +215,7 @@ function ManualAddModal({
               type="button"
               className="icon-btn"
               aria-label="Close"
-              onClick={onClose}
+              onClick={handleClose}
             >
               ✕
             </button>
@@ -281,12 +289,21 @@ function ManualAddModal({
             </div>
 
             <div className="row actions-right">
-              <button className="btn btn-ghost" type="button" onClick={onClose}>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                onClick={handleClose}
+              >
                 Cancel
               </button>
-              <button className="btn" type="submit">
-                {mode === 'edit' ? 'Save' : 'Add'}
+              <button className="btn" type="submit" value="site">
+                {mode === 'edit' ? 'Save' : 'Add to Site'}
               </button>
+              {mode === 'add' && (
+                <button className="btn btn-primary" type="submit" value="gcal">
+                  Add & Export to Google Calendar
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -301,13 +318,15 @@ ManualAddModal.propTypes = {
   initialValues: EventShape,
   mode: PropTypes.oneOf(['add', 'edit']),
   onClose: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
+  onSubmitToSite: PropTypes.func.isRequired,
+  onSubmitToGCal: PropTypes.func,
 };
 
 ManualAddModal.defaultProps = {
   defaultType: 'event',
   initialValues: null,
   mode: 'add',
+  onSubmitToGCal: null,
 };
 
 ManualAddModal.defaultProps = {
@@ -413,6 +432,22 @@ function Dashboard({ user, onLogout }) {
     return res.json();
   };
 
+  const postEventToGCal = async (eventId) => {
+    const userId = user.id;
+    const url = `${process.env.REACT_APP_BACKEND_URL}/gcal/add-event?event_id=${eventId}&user_id=${userId}`;
+    const response = await fetch(url, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      const msg = prettyDetail(text);
+      throw new Error(`POST /events failed: ${response.status}\n${msg}`);
+    }
+
+    return response.json();
+  };
+
   // modal controls
 
   const openEditFor = (ev) => {
@@ -465,6 +500,26 @@ function Dashboard({ user, onLogout }) {
       }
       closeModal();
       await fetchEvents();
+    } catch (e) {
+      setError(String(e.message || e));
+    }
+  };
+
+  const handleManualSubmitToGCal = async (manualForm) => {
+    setError('');
+
+    if (editId) {
+      setError('Export to Google Calendar is only available for new events.');
+      return;
+    }
+
+    try {
+      const event = await postEvent(manualForm);
+      closeModal();
+      await fetchEvents();
+
+      const eventId = event.id;
+      await postEventToGCal(eventId);
     } catch (e) {
       setError(String(e.message || e));
     }
@@ -538,7 +593,8 @@ function Dashboard({ user, onLogout }) {
         initialValues={editInitialValues} // <-- use your state
         mode={editId ? 'edit' : 'add'} // <-- tell modal which mode
         onClose={closeModal}
-        onSubmit={handleManualSubmit}
+        onSubmitToSite={handleManualSubmit}
+        onSubmitToGCal={handleManualSubmitToGCal}
       />
     </div>
   );
