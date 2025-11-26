@@ -23,6 +23,126 @@
   font-size: 1.2rem;
   color: #065f46;
 }
+/* ========== Auth landing layout ========== */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #ecfdf5; /* light mint */
+  color: #064e3b;      /* dark emerald */
+}
+
+/* Top nav bar */
+.auth-nav {
+  height: 64px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 0 1rem;
+  border-bottom: 1px dashed #9ae6b4;
+  background: #ffffffcc;
+  backdrop-filter: blur(6px);
+}
+
+.auth-nav-center {
+  justify-self: center;
+  font-weight: 1000;
+  letter-spacing: 0.3px;
+  color: #065f46;
+  font-size: 1.6rem;
+}
+
+.auth-nav-right {
+  justify-self: end;
+  display: inline-flex;
+  gap: 0.75rem;
+}
+
+.nav-link {
+  text-decoration: none;
+  padding: 0.35rem 0.7rem;
+  border-radius: 10px;
+  border: 1px dashed #9ae6b4;
+  color: #047857;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.nav-link:hover {
+  background: #d1fae5;
+}
+/* Make button look like your other nav links */
+.nav-link-btn {
+  background: transparent;
+  border: 1px dashed #9ae6b4; /* same as .nav-link */
+  cursor: pointer;
+  font: inherit;
+  padding: 0.35rem 0.7rem;
+}
+.nav-link nav-link-btn{
+  font-weight: 700;
+  font-size: 0.95rem;
+} 
+/* Content area inside generic modals (like Contact) */
+.modal-body {
+  padding: 0.85rem 0.1rem 0.2rem;
+  font-size: 0.95rem;
+  color: #064e3b;
+}
+.modal-body p {
+  margin: 0.3rem 0;
+}
+.modal-body a {
+  color: #047857;
+  text-decoration: underline;
+}
+
+
+/* Hero (blue area equivalent) */
+.auth-hero {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem 3rem;
+  background: linear-gradient(0deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.auth-hero-card {
+  width: min(880px, 100%);
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px dashed #9ae6b4;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.06);
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+.hero-title {
+  margin: 0 0 0.6rem 0;
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  color: #065f46;
+}
+
+.hero-sub {
+  margin: 0 0 1.4rem 0;
+  font-size: clamp(1rem, 2.1vw, 1.1rem);
+  line-height: 1.6;
+  color: #064e3b;
+  opacity: 0.9;
+}
+
+.hero-cta {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.hero-note {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #065f46;
+  opacity: 0.85;
+}
+
 .google-btn {
   display: flex;
   align-items: center;
@@ -95,16 +215,14 @@
 }
 .navbar a {
   text-decoration: none;
-  color: #047857;
+  color: #064e3b;
   font-weight: bold;
   transition: color 0.2s;
 }
 .navbar a:hover {
   color: #065f46;
 }
-.navbar a:visited {
-  color: #047857;
-}
+
 .navbar a:active {
   color: #047857;
 }
@@ -113,13 +231,13 @@
 .user-email-btn {
   background: none;
   border: none;
-  color: #065f46;
+  color: #064e3b;
   font-family: Monaco, Consolas, 'Courier New', monospace;
   font-size: 1rem;
   cursor: pointer;
 }
 .user-email-btn:hover {
-  text-decoration: underline;
+  color: #065f46;
 }
 
 /* ---------- User menu / Logout dropdown ---------- */
@@ -262,23 +380,40 @@
   align-self: center; /* vertically centers relative to row */
 }
 /* Assignments: done state */
+/* Base styling for assignment rows */
 .assignment-row {
+  background: #ffffff;
   transition:
     background-color 0.15s ease,
-    opacity 0.15s ease;
+    opacity 0.15s ease,
+    filter 0.15s ease;
 }
 
+/* Done state: soft gray card + muted text */
 .assignment-row-done {
-  background: #ecfdf5; /* light mint, same family as app background */
-  opacity: 0.8;
+  background: #f3f4f6; /* light gray */
+  opacity: 0.85;
 }
 
 .assignment-row-done .event-title,
 .assignment-row-done .event-date,
-.assignment-row-done .event-loc,
-.assignment-row-done .event-desc {
-  text-decoration: line-through;
+.assignment-row-done .event-desc,
+.assignment-row-done .event-loc {
+  color: #6b7280; /* gray-500-ish */
 }
+
+/* Optional: tiny "Done" chip next to the date or title if you want */
+.assignment-row-done .badge-done {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.4rem;
+  margin-left: 0.3rem;
+  font-size: 0.7rem;
+  border-radius: 999px;
+  background: #d1d5db;
+  color: #374151;
+}
+
 
 /* Done button style */
 .btn-done {

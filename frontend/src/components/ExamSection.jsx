@@ -88,7 +88,12 @@ function ExamsSection({
         </div>
       )}
 
-      {isEmpty && <p className="empty-state">No exams yet.</p>}
+      {isEmpty && (
+        <p className="empty-state">
+          No exams yet. Upload your syllabus thorugh the syllabus scanner tab or
+          add one manually using the +!
+        </p>
+      )}
 
       {!loading && !isEmpty && (
         <ul className="list event-list">
