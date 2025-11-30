@@ -108,7 +108,12 @@ function AssignmentsSection({
         </div>
       )}
 
-      {isEmpty && <p className="empty-state">No assignments yet.</p>}
+      {isEmpty && (
+        <p className="empty-state">
+          No assignments yet. Upload your syllabus thorugh the syllabus scanner
+          tab or add one manually using the +!
+        </p>
+      )}
 
       {!loading && !isEmpty && (
         <ul className="list event-list">

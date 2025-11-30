@@ -101,7 +101,8 @@ function EventsSection({
 
       {!loading && isEmpty && (
         <p className="empty-state">
-          No events yet. Upload your syllabus or add one manually!
+          No events yet. Upload your syllabus thorugh the syllabus scanner tab
+          or add one manually using the +!
         </p>
       )}
 
